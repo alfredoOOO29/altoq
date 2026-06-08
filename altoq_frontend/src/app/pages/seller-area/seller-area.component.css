@@ -1,6 +1,6 @@
 .seller-area-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f8f9fa;
 }
 
 .loading {
@@ -69,7 +69,8 @@
   background: white;
   padding: 0.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
 }
 
 .toggle-btn {
@@ -81,18 +82,21 @@
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   background: transparent;
   color: #64748b;
+  font-size: 0.95rem;
 }
 
 .toggle-btn:hover {
   background: #f1f5f9;
+  color: #475569;
 }
 
 .toggle-btn.active {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .store-view {
@@ -115,7 +119,8 @@
 }
 
 .dashboard-header {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  padding: 1rem 0;
 }
 
 .dashboard-header h1 {
@@ -133,34 +138,67 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .stat-card {
   background: white;
   border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   display: flex;
-  align-items: center;
   gap: 1rem;
+  align-items: flex-start;
+  transition: all 0.2s ease;
 }
 
-.stat-icon {
-  font-size: 2.5rem;
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.stat-color {
+  width: 4px;
+  height: 60px;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+}
+
+.stat-products {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stat-sales {
+  background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.stat-rating {
+  background: linear-gradient(180deg, #ec4899 0%, #db2777 100%);
+}
+
+.stat-clients {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
 }
 
 .stat-info h3 {
   font-size: 0.875rem;
   font-weight: 600;
   color: #64748b;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-info {
+  flex: 1;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
@@ -170,7 +208,8 @@
   background: white;
   border-radius: 0.75rem;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
 }
 
 .store-info-card h2 {
@@ -183,13 +222,13 @@
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .info-item.full-width {
@@ -200,11 +239,14 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .info-item .value {
   font-size: 1rem;
   color: #1e293b;
+  font-weight: 500;
 }
 
 .store-header {
@@ -213,6 +255,7 @@
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
 }
 
 .store-banner {
@@ -239,24 +282,25 @@
 
 .store-meta {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 }
 
 .meta-item {
+  color: #64748b;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
-  font-size: 0.875rem;
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.active {
@@ -273,72 +317,128 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .action-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   border: none;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
 }
 
 .action-button.primary {
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .action-button.primary:hover {
-  background-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
 }
 
 .action-button.secondary {
-  background-color: white;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
+  background: white;
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
 }
 
 .action-button.secondary:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+  background: #eff6ff;
+  border-color: #1e40af;
 }
 
 .add-product-chat {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
   margin-bottom: 2rem;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
 }
 
 .close-chat-btn {
   display: block;
-  margin: 20px auto 0;
-  padding: 10px 20px;
-  background: #6c757d;
-  color: white;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #e2e8f0;
+  color: #334155;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.3s;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .close-chat-btn:hover {
-  background: #5a6268;
+  background-color: #cbd5e1;
 }
 
-.products-section {
-  background: white;
-  border-radius: 1rem;
+.no-store {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.no-store-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.no-store-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-store-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+}
+
+.no-store-content p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.become-seller-button {
+  display: inline-block;
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.become-seller-button:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Estilos de vista de tienda */
+.products-section {
+  margin-bottom: 2rem;
 }
 
 .section-title {
@@ -350,31 +450,39 @@
 
 .no-products {
   text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 0.75rem;
   color: #64748b;
-  padding: 2rem;
+  border: 1px dashed #cbd5e1;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
 }
 
 .product-card {
-  border: 1px solid #e2e8f0;
+  background: white;
   border-radius: 0.75rem;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
 .product-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
+  width: 100%;
   height: 200px;
   overflow: hidden;
+  background: #f1f5f9;
 }
 
 .product-image img {
@@ -384,12 +492,12 @@
 }
 
 .product-info {
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .product-name {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #1e293b;
   margin: 0 0 0.5rem 0;
 }
@@ -397,7 +505,7 @@
 .product-description {
   color: #64748b;
   font-size: 0.875rem;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 1rem 0;
   line-height: 1.4;
 }
 
@@ -405,78 +513,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin: 1rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .product-price {
   font-weight: 700;
-  color: #3b82f6;
-  font-size: 1.125rem;
+  color: #1e293b;
+  font-size: 1.1rem;
 }
 
 .product-rating {
-  color: #f59e0b;
-  font-size: 0.875rem;
+  color: #64748b;
+  font-size: 0.9rem;
 }
 
 .view-product-btn {
   width: 100%;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.2s ease;
 }
 
 .view-product-btn:hover {
   transform: scale(1.02);
-}
-
-.no-store {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-}
-
-.no-store-content {
-  text-align: center;
-  max-width: 400px;
-}
-
-.no-store-content svg {
-  color: #cbd5e1;
-  margin-bottom: 1.5rem;
-}
-
-.no-store-content h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.no-store-content p {
-  color: #64748b;
-  margin-bottom: 1.5rem;
-}
-
-.become-seller-button {
-  display: inline-block;
-  background-color: #3b82f6;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.become-seller-button:hover {
-  background-color: #2563eb;
 }
 
 /* Tema Bakery (tortas, pasteles, dulces) */
