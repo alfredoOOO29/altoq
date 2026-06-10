@@ -21,14 +21,19 @@ router = APIRouter(prefix="/api/seller/metrics", tags=["metrics"])
 
 @router.get("/dashboard", response_model=DashboardSummary)
 def get_dashboard(
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Obtiene el resumen del dashboard para la tienda del usuario actual.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -41,14 +46,19 @@ def get_dashboard(
 def get_metrics(
     period: str = Query("daily", description="Periodo: daily, weekly, monthly"),
     days: int = Query(30, description="Número de días a retroceder", ge=1, le=365),
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Obtiene las métricas de la tienda para un período específico.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -64,14 +74,19 @@ def get_metrics(
 @router.get("/date/{metric_date}", response_model=StoreMetricResponse)
 def get_metric_by_date(
     metric_date: date,
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Obtiene las métricas de una fecha específica.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -88,14 +103,19 @@ def get_metric_by_date(
 
 @router.post("/visit")
 def record_visit(
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Registra una visita a la tienda del usuario actual.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -110,14 +130,19 @@ def record_visit(
 
 @router.post("/refresh")
 def refresh_metrics(
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Actualiza manualmente las métricas de la tienda (productos publicados y rating promedio).
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -130,21 +155,26 @@ def refresh_metrics(
     return {
         "message": "Métricas actualizadas exitosamente",
         "products_published": metric_products.products_published,
-        "average_rating": metric_rating.average_rating
+        "average_rating": metric_rating.avg_rating
     }
 
 @router.get("/summary", response_model=dict)
 def get_metrics_summary(
     start_date: date = Query(..., description="Fecha de inicio"),
     end_date: date = Query(..., description="Fecha de fin"),
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Obtiene un resumen de métricas para un rango de fechas específico.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
@@ -200,14 +230,19 @@ def get_metrics_summary(
 def get_period_comparison(
     period1_days: int = Query(7, description="Días del período 1 (reciente)", ge=1, le=365),
     period2_days: int = Query(7, description="Días del período 2 (anterior)", ge=1, le=365),
-    current_user: User = Depends(get_current_user),
+    current_user_email: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Compara métricas entre dos períodos para identificar tendencias.
     """
+    # Buscar usuario por email
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
     # Verificar que el usuario tenga una tienda
-    store = db.query(Store).filter(Store.user_id == current_user.id).first()
+    store = db.query(Store).filter(Store.user_id == user.id).first()
     if not store:
         raise HTTPException(status_code=404, detail="El usuario no tiene una tienda")
     
