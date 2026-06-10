@@ -18,17 +18,19 @@ export class ConversationalAssistantComponent implements OnInit {
   currentQuestion: string = '';
   userInput: string = '';
   productName: string = '';
+  productPrice: string = '';
+  productDescription: string = '';
+  productImage: string = '';
   detectedCategory: any = null;
-  templateFields: any[] = [];
-  currentFieldIndex: number = 0;
   collectedData: any = {};
   isTyping: boolean = false;
   isCreatingProduct: boolean = false;
   productCreated: boolean = false;
-  availableCategories: any[] = [];
-  showCategorySelection: boolean = false;
+  categoriesCreated: boolean = false;
+  userCategories: string[] = [];
 
   @Input() storeId: number | null = null;
+  @Input() storeName: string = '';
   @Output() productCreatedEvent = new EventEmitter<void>();
 
   constructor(
@@ -43,8 +45,8 @@ export class ConversationalAssistantComponent implements OnInit {
   }
 
   startConversation(): void {
-    this.addMessage('assistant', '¡Hola! Soy tu asistente para crear productos. ¿Cuál es el nombre del producto que quieres vender?');
-    this.currentQuestion = 'product_name';
+    this.addMessage('assistant', '¡Hola! Soy tu asistente para crear productos. Primero, necesito que crees las categorías para tu tienda. ¿Qué categorías quieres agregar? (Escribe las categorías separadas por coma, por ejemplo: Ropa, Calzado, Accesorios)');
+    this.currentQuestion = 'create_categories';
   }
 
   addMessage(sender: string, content: string): void {
@@ -67,15 +69,26 @@ export class ConversationalAssistantComponent implements OnInit {
     console.log('Processing input:', input, 'Current question:', this.currentQuestion);
 
     switch (this.currentQuestion) {
+      case 'create_categories':
+        this.createCategoriesFromInput(input);
+        break;
       case 'product_name':
         this.productName = input;
         this.detectCategory(input);
         break;
-      case 'select_category':
-        this.selectCategory(parseInt(input));
+      case 'product_price':
+        this.productPrice = input;
+        this.currentQuestion = 'product_description';
+        this.addMessage('assistant', 'Perfecto. Ahora, ¿cuál es la descripción de tu producto?');
         break;
-      case 'collect_fields':
-        this.collectFieldData(input);
+      case 'product_description':
+        this.productDescription = input;
+        this.currentQuestion = 'product_image';
+        this.addMessage('assistant', 'Excelente. Por último, ¿cuál es la URL de la imagen de tu producto? (Si no tienes una, escribe "no imagen")');
+        break;
+      case 'product_image':
+        this.productImage = input === 'no imagen' ? '' : input;
+        this.completeConversation();
         break;
       case 'confirm_creation':
         if (input.toLowerCase() === 'si' || input.toLowerCase() === 'sí' || input.toLowerCase() === 'yes') {
@@ -88,100 +101,114 @@ export class ConversationalAssistantComponent implements OnInit {
     }
   }
 
-  detectCategory(productName: string): void {
-    this.templateService.detectCategory(productName).subscribe({
-      next: (response) => {
-        if (response.category_id) {
-          this.detectedCategory = response;
-          this.templateFields = response.fields || [];
-          this.addMessage('assistant', `He detectado que tu producto es de la categoría: ${response.template_name}. Ahora necesito que me des algunos detalles específicos.`);
-          this.currentQuestion = 'collect_fields';
-          this.askNextField();
-        } else {
-          this.addMessage('assistant', 'No pude detectar automáticamente la categoría. Por favor, selecciona una categoría manualmente.');
-          this.loadAvailableCategories();
-        }
-      },
-      error: (error) => {
-        console.error('Error detecting category:', error);
-        this.addMessage('assistant', 'Hubo un error al detectar la categoría. Cargando categorías disponibles...');
-        this.loadAvailableCategories();
-      }
-    });
-  }
-
-  loadAvailableCategories(): void {
-    this.categoryService.getCategories().subscribe({
-      next: (categories) => {
-        this.availableCategories = categories;
-        this.showCategorySelection = true;
-        this.currentQuestion = 'select_category';
-        this.addMessage('assistant', 'Estas son las categorías disponibles. Escribe el número de la categoría que deseas:');
-        categories.forEach((category: any, index: number) => {
-          this.addMessage('assistant', `${index + 1}. ${category.name}`);
-        });
-      },
-      error: (error) => {
-        console.error('Error loading categories:', error);
-        this.addMessage('assistant', 'Hubo un error al cargar las categorías. Por favor, intenta nuevamente.');
-      }
-    });
-  }
-
-  selectCategory(categoryIndex: number): void {
-    if (categoryIndex < 1 || categoryIndex > this.availableCategories.length) {
-      this.addMessage('assistant', 'Selección inválida. Por favor, selecciona un número válido.');
+  createCategoriesFromInput(input: string): void {
+    const categories = input.split(',').map(cat => cat.trim()).filter(cat => cat.length > 0);
+    
+    if (categories.length === 0) {
+      this.addMessage('assistant', 'Por favor, ingresa al menos una categoría válida.');
       return;
     }
 
-    const selectedCategory = this.availableCategories[categoryIndex - 1];
-    this.detectedCategory = {
-      category_id: selectedCategory.id,
-      template_name: selectedCategory.name
-    };
-    this.showCategorySelection = false;
+    this.userCategories = categories;
+    this.addMessage('assistant', `Perfecto, voy a crear las siguientes categorías: ${categories.join(', ')}`);
+    
+    this.createCategoriesInDatabase(categories);
+  }
 
-    // Obtener los campos del template para esta categoría
-    this.templateService.getTemplates(selectedCategory.id).subscribe({
-      next: (templates) => {
-        if (templates && templates.length > 0) {
-          this.templateFields = templates[0].fields || [];
-          this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. Ahora necesito que me des algunos detalles específicos.`);
-          this.currentQuestion = 'collect_fields';
-          this.askNextField();
-        } else {
-          // Si no hay template, crear producto sin campos adicionales
-          this.templateFields = [];
-          this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. No hay campos adicionales requeridos.`);
-          this.completeConversation();
+  createCategoriesInDatabase(categories: string[]): void {
+    let createdCount = 0;
+    let errorCount = 0;
+    
+    categories.forEach((categoryName, index) => {
+      const categoryData = {
+        name: categoryName,
+        slug: categoryName.toLowerCase().replace(/\s+/g, '-'),
+        description: `Categoría para productos de ${categoryName}`
+      };
+
+      this.categoryService.createCategory(categoryData).subscribe({
+        next: (response) => {
+          createdCount++;
+          console.log(`Categoría "${categoryName}" creada con ID: ${response.id}`);
+          
+          if (createdCount + errorCount === categories.length) {
+            this.finishCategoryCreation(createdCount, errorCount);
+          }
+        },
+        error: (error) => {
+          errorCount++;
+          console.error(`Error creando categoría "${categoryName}":`, error);
+          
+          if (createdCount + errorCount === categories.length) {
+            this.finishCategoryCreation(createdCount, errorCount);
+          }
         }
-      },
-      error: (error) => {
-        console.error('Error loading template fields:', error);
-        // Si hay error, continuar sin campos adicionales
-        this.templateFields = [];
-        this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. No hay campos adicionales requeridos.`);
-        this.completeConversation();
-      }
+      });
     });
   }
 
-  askNextField(): void {
-    if (this.currentFieldIndex < this.templateFields.length) {
-      const field = this.templateFields[this.currentFieldIndex];
-      this.addMessage('assistant', `${field.label}${field.required ? ' (requerido)' : ''}`);
+  finishCategoryCreation(createdCount: number, errorCount: number): void {
+    if (createdCount > 0) {
+      this.categoriesCreated = true;
+      this.addMessage('assistant', `✅ Categorías creadas exitosamente (${createdCount}). Ahora puedes crear productos.`);
+      this.currentQuestion = 'product_name';
+      this.addMessage('assistant', '¿Cuál es el nombre del producto que quieres vender?');
     } else {
-      this.completeConversation();
+      this.addMessage('assistant', '❌ Hubo errores al crear las categorías. Por favor, intenta nuevamente.');
     }
   }
 
-  collectFieldData(input: string): void {
-    if (this.currentFieldIndex < this.templateFields.length) {
-      const field = this.templateFields[this.currentFieldIndex];
-      this.collectedData[field.name] = input;
-      this.currentFieldIndex++;
-      this.askNextField();
+  detectCategory(productName: string): void {
+    const detectedCategory = this.detectCategoryLocally(productName);
+    
+    if (detectedCategory) {
+      this.detectedCategory = {
+        category_id: null,
+        template_name: detectedCategory
+      };
+      this.addMessage('assistant', `He detectado que tu producto pertenece a la categoría: ${detectedCategory}.`);
+      this.askForPrice();
+    } else {
+      this.detectedCategory = {
+        category_id: null,
+        template_name: 'General'
+      };
+      this.addMessage('assistant', 'No pude detectar automáticamente la categoría. Se asignará la categoría "General".');
+      this.askForPrice();
     }
+  }
+
+  detectCategoryLocally(productName: string): string | null {
+    const name = productName.toLowerCase();
+    
+    // Palabras clave para cada categoría
+    const categoryKeywords: { [key: string]: string[] } = {
+      'Calzado': ['zapato', 'zapatilla', 'bota', 'sandalia', 'tenis', 'chancla', 'calzado', 'pie', 'taco'],
+      'Ropa': ['camisa', 'pantalon', 'vestido', 'blusa', 'chaqueta', 'sueter', 'ropa', 'camiseta', 'jeans', 'pantalón'],
+      'Electrónica': ['celular', 'telefono', 'laptop', 'computadora', 'tablet', 'auricular', 'cargador', 'electronica', 'tecnologia', 'gadget'],
+      'Hogar': ['mesa', 'silla', 'sofa', 'cama', 'lampara', 'cocina', 'hogar', 'mueble', 'decoracion'],
+      'Alimentos': ['comida', 'bebida', 'snack', 'dulce', 'postre', 'alimento', 'galleta', 'chocolate'],
+      'Deportes': ['balon', 'raqueta', 'bicicleta', 'deporte', 'gimnasio', 'pesa', 'natacion'],
+      'Belleza': ['crema', 'maquillaje', 'perfume', 'belleza', 'cabello', 'piel', 'cosmetico'],
+      'Juguetes': ['juguete', 'juego', 'muñeco', 'puzzle', 'lego', 'niño', 'infantil'],
+      'Libros': ['libro', 'novela', 'comic', 'revista', 'lectura', 'escritura'],
+      'Accesorios': ['reloj', 'gafas', 'bolso', 'cartera', 'collar', 'anillo', 'accesorio']
+    };
+
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      for (const keyword of keywords) {
+        if (name.includes(keyword)) {
+          return category;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  askForPrice(): void {
+    this.currentQuestion = 'product_price';
+    this.addMessage('assistant', '¿Cuál es el precio de tu producto? (Escribe solo el número, por ejemplo: 50)');
   }
 
   completeConversation(): void {
@@ -190,16 +217,16 @@ export class ConversationalAssistantComponent implements OnInit {
     
     // Mostrar resumen y botón para crear producto
     const summary = this.generateProductSummary();
-    this.addMessage('assistant', `Resumen del producto:\n${summary}\n\n¿Quieres crear este producto ahora?`);
+    this.addMessage('assistant', `Resumen del producto:\n${summary}\n\n¿Quieres crear este producto ahora? (Responde "si" para confirmar)`);
     this.currentQuestion = 'confirm_creation';
   }
 
   generateProductSummary(): string {
     let summary = `Nombre: ${this.productName}\n`;
     summary += `Categoría: ${this.detectedCategory.template_name}\n`;
-    for (const [key, value] of Object.entries(this.collectedData)) {
-      summary += `${key}: ${value}\n`;
-    }
+    summary += `Precio: S/. ${this.productPrice}\n`;
+    summary += `Descripción: ${this.productDescription}\n`;
+    summary += `Imagen: ${this.productImage || 'No especificada'}`;
     return summary;
   }
 
@@ -208,20 +235,22 @@ export class ConversationalAssistantComponent implements OnInit {
     this.addMessage('assistant', 'Creando tu producto...');
 
     console.log('Creating product with storeId:', this.storeId);
+    console.log('Store name:', this.storeName);
 
     // Construir el objeto del producto
     const productData: any = {
       id: 0, // El backend asignará el ID
       name: this.productName,
-      price: 0, // Precio por defecto, el usuario puede actualizarlo después
-      description: `Producto creado con asistente conversacional. Categoría: ${this.detectedCategory.template_name}`,
-      image: '',
-      category: this.detectedCategory.category_id.toString(),
+      price: parseFloat(this.productPrice) || 0,
+      description: this.productDescription,
+      image: this.productImage,
+      category: '1', // Categoría por defecto (General)
       rating: 0,
       rating_count: 0,
       stock: 10, // Stock por defecto
       specifications: this.collectedData,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      store_name: this.storeName // Agregar nombre de la tienda
     };
 
     // Agregar store_id si está disponible
@@ -241,14 +270,14 @@ export class ConversationalAssistantComponent implements OnInit {
       next: (response) => {
         this.isCreatingProduct = false;
         this.productCreated = true;
-        this.addMessage('assistant', '¡Producto creado exitosamente! Ya está disponible en tu tienda.');
+        this.addMessage('assistant', `✅ ¡Producto "${this.productName}" creado exitosamente para la tienda "${this.storeName}"! Ya está disponible en tu tienda y puedes verlo en "Ver Productos".`);
         console.log('Product created:', response);
         this.productCreatedEvent.emit();
       },
       error: (error) => {
         this.isCreatingProduct = false;
         console.error('Error creating product:', error);
-        this.addMessage('assistant', 'Hubo un error al crear el producto. Por favor, intenta nuevamente.');
+        this.addMessage('assistant', '❌ Hubo un error al crear el producto. Por favor, intenta nuevamente.');
       }
     });
   }
@@ -256,13 +285,16 @@ export class ConversationalAssistantComponent implements OnInit {
   resetConversation(): void {
     this.messages = [];
     this.productName = '';
+    this.productPrice = '';
+    this.productDescription = '';
+    this.productImage = '';
     this.detectedCategory = null;
-    this.templateFields = [];
-    this.currentFieldIndex = 0;
     this.collectedData = {};
     this.currentQuestion = '';
     this.isCreatingProduct = false;
     this.productCreated = false;
+    this.categoriesCreated = false;
+    this.userCategories = [];
     this.startConversation();
   }
 }

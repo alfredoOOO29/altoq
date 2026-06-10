@@ -56,4 +56,14 @@ export class SellerService {
       headers: this.getHeaders()
     });
   }
+
+  updateStore(storeData: any): Observable<any> {
+    const headers = this.getHeaders();
+    const params = this.getParams();
+    
+    return this.http.put(`${this.apiUrl}/update-store`, storeData, {
+      headers: headers,
+      params: params
+    });
+  }
 }

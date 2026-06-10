@@ -70,17 +70,6 @@
       </svg>
     </button>
 
-    <!-- Category Selection Buttons -->
-    <div *ngIf="showCategorySelection" class="category-buttons">
-      <button
-        *ngFor="let category of availableCategories; let i = index"
-        (click)="selectCategory(i + 1)"
-        class="category-btn"
-        [disabled]="isCreatingProduct">
-        {{ i + 1 }}. {{ category.name }}
-      </button>
-    </div>
-
     <!-- Confirm Product Button -->
     <button
       *ngIf="currentQuestion === 'confirm_creation'"
