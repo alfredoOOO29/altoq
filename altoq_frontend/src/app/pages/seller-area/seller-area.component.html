@@ -102,7 +102,7 @@
 
       <!-- Chat guiado para agregar producto -->
       <div *ngIf="showAddProductChat" class="add-product-chat">
-        <app-conversational-assistant></app-conversational-assistant>
+        <app-conversational-assistant [storeId]="store?.id" (productCreatedEvent)="onProductCreated()"></app-conversational-assistant>
         <button (click)="toggleAddProductChat()" class="close-chat-btn">Cerrar</button>
       </div>
 

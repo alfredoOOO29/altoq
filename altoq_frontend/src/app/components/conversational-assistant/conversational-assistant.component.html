@@ -51,29 +51,40 @@
   <!-- Input Area -->
   <div class="input-area">
     <div class="input-wrapper">
-      <input 
-        type="text" 
-        [(ngModel)]="userInput" 
+      <input
+        type="text"
+        [(ngModel)]="userInput"
         (keyup.enter)="handleUserInput(userInput); userInput = ''"
         placeholder="Escribe tu respuesta aquí..."
         class="message-input"
         [disabled]="isCreatingProduct"
       >
     </div>
-    
-    <button (click)="handleUserInput(userInput); userInput = ''" 
-            class="send-btn" 
+
+    <button (click)="handleUserInput(userInput); userInput = ''"
+            class="send-btn"
             [disabled]="isCreatingProduct"
             title="Enviar">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="send-icon">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
       </svg>
     </button>
-    
+
+    <!-- Category Selection Buttons -->
+    <div *ngIf="showCategorySelection" class="category-buttons">
+      <button
+        *ngFor="let category of availableCategories; let i = index"
+        (click)="selectCategory(i + 1)"
+        class="category-btn"
+        [disabled]="isCreatingProduct">
+        {{ i + 1 }}. {{ category.name }}
+      </button>
+    </div>
+
     <!-- Confirm Product Button -->
-    <button 
-      *ngIf="currentQuestion === 'confirm_creation'" 
-      (click)="createProduct()" 
+    <button
+      *ngIf="currentQuestion === 'confirm_creation'"
+      (click)="createProduct()"
       class="confirm-btn"
       [disabled]="isCreatingProduct">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="confirm-icon" *ngIf="!isCreatingProduct">

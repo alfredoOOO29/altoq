@@ -77,7 +77,20 @@ export class SellerAreaComponent implements OnInit {
   loadStoreProducts(): void {
     this.productService.getProducts().subscribe({
       next: (products) => {
-        this.storeProducts = products.filter(p => p.store_id === this.store?.id);
+        console.log('Seller Area - All products:', products);
+        console.log('Seller Area - Store ID:', this.store?.id);
+        console.log('Seller Area - Store:', this.store);
+
+        // Filtrar productos por store_id (manejar string vs number)
+        this.storeProducts = products.filter(p => {
+          const productStoreId = p.store_id;
+          const currentStoreId = this.store?.id;
+          console.log(`Seller Area - Comparing product store_id (${productStoreId} type: ${typeof productStoreId}) with store id (${currentStoreId} type: ${typeof currentStoreId})`);
+          // Comparar como números para evitar problemas de tipo
+          return Number(productStoreId) === Number(currentStoreId);
+        });
+
+        console.log('Seller Area - Filtered products:', this.storeProducts);
       },
       error: (error) => {
         console.error('Error loading products:', error);
@@ -87,6 +100,10 @@ export class SellerAreaComponent implements OnInit {
 
   toggleAddProductChat(): void {
     this.showAddProductChat = !this.showAddProductChat;
+  }
+
+  onProductCreated(): void {
+    this.loadStoreProducts();
   }
 
   switchView(view: 'store' | 'dashboard'): void {

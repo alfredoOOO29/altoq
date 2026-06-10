@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TemplateService } from '../../services/template.service';
 import { ProductService } from '../../services/product.service';
 import { AuthService } from '../../services/auth.service';
+import { CategoryService } from '../../services/category.service';
 
 @Component({
   selector: 'app-conversational-assistant',
@@ -24,11 +25,17 @@ export class ConversationalAssistantComponent implements OnInit {
   isTyping: boolean = false;
   isCreatingProduct: boolean = false;
   productCreated: boolean = false;
+  availableCategories: any[] = [];
+  showCategorySelection: boolean = false;
+
+  @Input() storeId: number | null = null;
+  @Output() productCreatedEvent = new EventEmitter<void>();
 
   constructor(
     private templateService: TemplateService,
     private productService: ProductService,
-    private authService: AuthService
+    private authService: AuthService,
+    private categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
@@ -58,11 +65,14 @@ export class ConversationalAssistantComponent implements OnInit {
 
   processInput(input: string): void {
     console.log('Processing input:', input, 'Current question:', this.currentQuestion);
-    
+
     switch (this.currentQuestion) {
       case 'product_name':
         this.productName = input;
         this.detectCategory(input);
+        break;
+      case 'select_category':
+        this.selectCategory(parseInt(input));
         break;
       case 'collect_fields':
         this.collectFieldData(input);
@@ -89,11 +99,69 @@ export class ConversationalAssistantComponent implements OnInit {
           this.askNextField();
         } else {
           this.addMessage('assistant', 'No pude detectar automáticamente la categoría. Por favor, selecciona una categoría manualmente.');
+          this.loadAvailableCategories();
         }
       },
       error: (error) => {
         console.error('Error detecting category:', error);
-        this.addMessage('assistant', 'Hubo un error al detectar la categoría. Por favor, intenta nuevamente.');
+        this.addMessage('assistant', 'Hubo un error al detectar la categoría. Cargando categorías disponibles...');
+        this.loadAvailableCategories();
+      }
+    });
+  }
+
+  loadAvailableCategories(): void {
+    this.categoryService.getCategories().subscribe({
+      next: (categories) => {
+        this.availableCategories = categories;
+        this.showCategorySelection = true;
+        this.currentQuestion = 'select_category';
+        this.addMessage('assistant', 'Estas son las categorías disponibles. Escribe el número de la categoría que deseas:');
+        categories.forEach((category: any, index: number) => {
+          this.addMessage('assistant', `${index + 1}. ${category.name}`);
+        });
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        this.addMessage('assistant', 'Hubo un error al cargar las categorías. Por favor, intenta nuevamente.');
+      }
+    });
+  }
+
+  selectCategory(categoryIndex: number): void {
+    if (categoryIndex < 1 || categoryIndex > this.availableCategories.length) {
+      this.addMessage('assistant', 'Selección inválida. Por favor, selecciona un número válido.');
+      return;
+    }
+
+    const selectedCategory = this.availableCategories[categoryIndex - 1];
+    this.detectedCategory = {
+      category_id: selectedCategory.id,
+      template_name: selectedCategory.name
+    };
+    this.showCategorySelection = false;
+
+    // Obtener los campos del template para esta categoría
+    this.templateService.getTemplates(selectedCategory.id).subscribe({
+      next: (templates) => {
+        if (templates && templates.length > 0) {
+          this.templateFields = templates[0].fields || [];
+          this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. Ahora necesito que me des algunos detalles específicos.`);
+          this.currentQuestion = 'collect_fields';
+          this.askNextField();
+        } else {
+          // Si no hay template, crear producto sin campos adicionales
+          this.templateFields = [];
+          this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. No hay campos adicionales requeridos.`);
+          this.completeConversation();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading template fields:', error);
+        // Si hay error, continuar sin campos adicionales
+        this.templateFields = [];
+        this.addMessage('assistant', `Has seleccionado: ${selectedCategory.name}. No hay campos adicionales requeridos.`);
+        this.completeConversation();
       }
     });
   }
@@ -138,9 +206,11 @@ export class ConversationalAssistantComponent implements OnInit {
   createProduct(): void {
     this.isCreatingProduct = true;
     this.addMessage('assistant', 'Creando tu producto...');
-    
+
+    console.log('Creating product with storeId:', this.storeId);
+
     // Construir el objeto del producto
-    const productData = {
+    const productData: any = {
       id: 0, // El backend asignará el ID
       name: this.productName,
       price: 0, // Precio por defecto, el usuario puede actualizarlo después
@@ -154,6 +224,16 @@ export class ConversationalAssistantComponent implements OnInit {
       created_at: new Date().toISOString()
     };
 
+    // Agregar store_id si está disponible
+    if (this.storeId) {
+      productData.store_id = this.storeId;
+      console.log('Adding store_id to product:', this.storeId);
+    } else {
+      console.warn('storeId is null or undefined');
+    }
+
+    console.log('Product data to send:', productData);
+
     const token = this.authService.getToken();
     const params = token ? { token } : {};
 
@@ -163,6 +243,7 @@ export class ConversationalAssistantComponent implements OnInit {
         this.productCreated = true;
         this.addMessage('assistant', '¡Producto creado exitosamente! Ya está disponible en tu tienda.');
         console.log('Product created:', response);
+        this.productCreatedEvent.emit();
       },
       error: (error) => {
         this.isCreatingProduct = false;
