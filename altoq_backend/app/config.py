@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     google_client_id: str | None = None
+    gemini_api_key: str | None = None
 
     class Config:
         env_file = ".env"

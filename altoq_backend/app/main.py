@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routes import products, auth, orders, admin_auth, admin_users, admin_stores, categories, users, chat, templates, delivery, seller
+from .routes import products, auth, orders, admin_auth, admin_users, admin_stores, categories, users, chat, templates, delivery, seller, store_assistant
 
 # Crear tablas
 Base.metadata.create_all(bind=engine)
@@ -36,6 +36,7 @@ app.include_router(chat.router)
 app.include_router(templates.router)
 app.include_router(delivery.router)
 app.include_router(seller.router)
+app.include_router(store_assistant.router)
 
 @app.get("/")
 def root():

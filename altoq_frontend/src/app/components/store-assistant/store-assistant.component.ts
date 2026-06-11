@@ -32,8 +32,7 @@ export class StoreAssistantComponent implements OnInit {
   }
 
   startConversation(): void {
-    this.addMessage('assistant', '¡Hola! Soy tu asistente para crear tu tienda en ALTOQ. ¿Cuál es el nombre de tu tienda?');
-    this.currentQuestion = 'store_name';
+    this.addMessage('assistant', '¡Hola! Soy tu Asistente Inteligente ALTOQ 🤖. Estoy aquí para ayudarte a configurar tu nueva tienda. Cuéntame, ¿cómo te gustaría que se llame tu tienda o qué tipo de productos piensas vender?');
   }
 
   addMessage(sender: string, content: string): void {
@@ -44,60 +43,37 @@ export class StoreAssistantComponent implements OnInit {
     if (!input || input.trim() === '') return;
     
     this.addMessage('user', input);
+    this.userInput = ''; // clear input
     this.isTyping = true;
 
-    setTimeout(() => {
-      this.processInput(input);
-      this.isTyping = false;
-    }, 500);
-  }
-
-  processInput(input: string): void {
-    console.log('Processing input:', input, 'Current question:', this.currentQuestion);
-    
-    switch (this.currentQuestion) {
-      case 'store_name':
-        this.storeData.name = input;
-        this.addMessage('assistant', '¡Qué buen nombre! ¿Qué tipo de productos vende tu tienda?');
-        this.currentQuestion = 'sells';
-        break;
-      case 'sells':
-        this.storeData.sells = input;
-        this.addMessage('assistant', 'Perfecto. ¿Cuál es tu RUC?');
-        this.currentQuestion = 'ruc';
-        break;
-      case 'ruc':
-        this.storeData.ruc = input;
-        this.addMessage('assistant', '¿Cuál es tu número de contacto?');
-        this.currentQuestion = 'contact';
-        break;
-      case 'contact':
-        this.storeData.contact = input;
-        this.addMessage('assistant', '¿Cuál es tu correo electrónico?');
-        this.currentQuestion = 'email';
-        break;
-      case 'email':
-        this.storeData.email = input;
-        this.completeConversation();
-        break;
-    }
+    this.sellerService.chatWithStoreAssistant(this.messages).subscribe({
+      next: (response) => {
+        this.isTyping = false;
+        if (response.response) {
+          this.addMessage('assistant', response.response);
+        }
+        
+        // Actualizar datos extraídos
+        if (response.name) this.storeData.name = response.name;
+        if (response.description) this.storeData.sells = response.description;
+        if (response.ruc) this.storeData.ruc = response.ruc;
+        if (response.contact) this.storeData.contact = response.contact;
+        if (response.email) this.storeData.email = response.email;
+        
+        if (response.is_complete) {
+          this.currentQuestion = 'confirm_creation';
+        }
+      },
+      error: (error) => {
+        this.isTyping = false;
+        console.error('Error con el asistente IA:', error);
+        this.addMessage('assistant', 'Lo siento, hubo un problema de conexión. ¿Podrías intentar decir eso de nuevo?');
+      }
+    });
   }
 
   completeConversation(): void {
-    this.addMessage('assistant', '¡Perfecto! He recopilado toda la información necesaria para crear tu tienda.');
-    
-    const summary = this.generateStoreSummary();
-    this.addMessage('assistant', `Resumen de tu tienda:\n${summary}\n\n¿Quieres crear tu tienda ahora?`);
     this.currentQuestion = 'confirm_creation';
-  }
-
-  generateStoreSummary(): string {
-    let summary = `Nombre: ${this.storeData.name}\n`;
-    summary += `Vende: ${this.storeData.sells}\n`;
-    summary += `RUC: ${this.storeData.ruc}\n`;
-    summary += `Contacto: ${this.storeData.contact}\n`;
-    summary += `Correo: ${this.storeData.email}\n`;
-    return summary;
   }
 
   createStore(): void {

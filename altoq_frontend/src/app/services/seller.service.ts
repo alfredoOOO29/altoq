@@ -66,4 +66,11 @@ export class SellerService {
       params: params
     });
   }
+
+  chatWithStoreAssistant(messages: any[]): Observable<any> {
+    const chatApiUrl = 'http://localhost:8000/api/store-assistant/chat';
+    return this.http.post(chatApiUrl, { messages }, {
+      headers: this.getHeaders()
+    });
+  }
 }
