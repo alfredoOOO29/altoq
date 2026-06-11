@@ -41,6 +41,9 @@ export class ConversationalAssistantComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('ConversationalAssistantComponent initialized');
+    console.log('StoreId:', this.storeId);
+    console.log('StoreName:', this.storeName);
     this.startConversation();
   }
 
@@ -272,6 +275,8 @@ export class ConversationalAssistantComponent implements OnInit {
         this.productCreated = true;
         this.addMessage('assistant', `✅ ¡Producto "${this.productName}" creado exitosamente para la tienda "${this.storeName}"! Ya está disponible en tu tienda y puedes verlo en "Ver Productos".`);
         console.log('Product created:', response);
+        console.log('Product store_id from response:', response.store_id);
+        console.log('Emitting productCreatedEvent');
         this.productCreatedEvent.emit();
       },
       error: (error) => {

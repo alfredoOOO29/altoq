@@ -96,10 +96,13 @@ export class SellerAreaComponent implements OnInit {
           const currentStoreId = this.store?.id;
           console.log(`Seller Area - Comparing product store_id (${productStoreId} type: ${typeof productStoreId}) with store id (${currentStoreId} type: ${typeof currentStoreId})`);
           // Comparar como números para evitar problemas de tipo
-          return Number(productStoreId) === Number(currentStoreId);
+          const match = Number(productStoreId) === Number(currentStoreId);
+          console.log(`Seller Area - Match result: ${match}`);
+          return match;
         });
 
         console.log('Seller Area - Filtered products:', this.storeProducts);
+        console.log('Seller Area - Filtered products count:', this.storeProducts.length);
       },
       error: (error) => {
         console.error('Error loading products:', error);

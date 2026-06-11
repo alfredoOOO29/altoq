@@ -141,7 +141,7 @@
 										</div>
 										Mis Pedidos
 									</a>
-									<a routerLink="/become-seller" (click)="closeUserDropdown()" class="flex items-center px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors group" role="menuitem">
+									<a *ngIf="!(hasStore$ | async)" routerLink="/become-seller" (click)="closeUserDropdown()" class="flex items-center px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors group" role="menuitem">
 										<div class="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mr-2.5 shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
 											<svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -149,7 +149,7 @@
 										</div>
 										Conviértete en Vendedor
 									</a>
-									<a routerLink="/seller-area" (click)="closeUserDropdown()" class="flex items-center px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors group" role="menuitem">
+									<a *ngIf="hasStore$ | async" routerLink="/seller-area" (click)="closeUserDropdown()" class="flex items-center px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors group" role="menuitem">
 										<div class="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mr-2.5 shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
 											<svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />

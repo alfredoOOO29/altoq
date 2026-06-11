@@ -55,6 +55,28 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  updateUser(user: User): void {
+    localStorage.setItem('user', JSON.stringify(user));
+    this.userSubject.next(user);
+  }
+
+  refreshCurrentUser(): Observable<User> {
+    const token = this.getToken();
+    if (!token) {
+      return of(null);
+    }
+    return this.http.get<User>(`${this.apiUrl}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }).pipe(
+      tap(user => {
+        localStorage.setItem('user', JSON.stringify(user));
+        this.userSubject.next(user);
+      })
+    );
+  }
+
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
