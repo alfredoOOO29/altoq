@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { LoginCredentials, RegisterData, AuthResponse, User } from '../models/auth';
 
 @Injectable({
@@ -60,7 +60,7 @@ export class AuthService {
     this.userSubject.next(user);
   }
 
-  refreshCurrentUser(): Observable<User> {
+  refreshCurrentUser(): Observable<User | null> {
     const token = this.getToken();
     if (!token) {
       return of(null);
