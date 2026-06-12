@@ -60,7 +60,7 @@ def check_env_file():
 def run_alembic(args: list[str]):
     """Ejecuta un comando de alembic usando el Python del venv."""
     python_exe = get_venv_python()
-    cmd = [python_exe, "-m", "alembic"] + args
+    cmd = [python_exe, "-m", "alembic.config"] + args
     print(f"  Ejecutando: {' '.join(cmd)}")
     print("-" * 50)
     result = subprocess.run(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
