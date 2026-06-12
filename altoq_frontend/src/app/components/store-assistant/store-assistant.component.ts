@@ -4,11 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { SellerService } from '../../services/seller.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { 
+  RefreshCw, 
+  Send, 
+  Check, 
+  Store, 
+  User,
+  Bot,
+  Eye
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-store-assistant',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RefreshCw, Send, Check, Store, User, Bot, Eye],
   templateUrl: './store-assistant.component.html',
   styleUrls: ['./store-assistant.component.css']
 })

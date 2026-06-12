@@ -1,121 +1,193 @@
 <div class="become-seller-container">
-  <div class="form-card">
-    <h1>Crear Tienda</h1>
-    <p class="subtitle">Crea tu tienda y empieza a vender en ALTOQ</p>
-
-    <div class="mode-toggle">
-      <button 
-        (click)="toggleMode()" 
-        [class.active]="!useChatMode"
-        class="mode-button">
-        Formulario
-      </button>
-      <button 
-        (click)="toggleMode()" 
-        [class.active]="useChatMode"
-        class="mode-button">
-        Chat Guiado con Templates
-      </button>
+  <div class="main-wrapper" [class.chat-mode-active]="useChatMode">
+    <div class="info-section">
+      <div class="brand-badge">
+        <i-lucide-store class="brand-icon"></i-lucide-store>
+        <span>ALTOQ</span>
+      </div>
+      <h2>Empieza a vender hoy</h2>
+      <p>Crea tu tienda en minutos y llega a miles de clientes en toda la plataforma.</p>
+      
+      <div class="features-list">
+        <div class="feature-item">
+          <div class="feature-icon-wrapper">
+            <i class="fa-brands fa-buffer feature-icon"></i>
+          </div>
+          <div class="feature-text">
+            <strong>Gestión de productos</strong>
+            <span>Sube y administra tu catálogo fácilmente</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon-wrapper">
+            <i class="fa-solid fa-chart-mixed feature-icon"></i>
+          </div>
+          <div class="feature-text">
+            <strong>Estadísticas en tiempo real</strong>
+            <span>Monitorea tus ventas y rendimiento</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon-wrapper">
+            <i class="fa-light fa-comment"></i>
+          </div>
+          <div class="feature-text">
+            <strong>Soporte 24/7</strong>
+            <span>Ayuda cuando la necesites</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert-success">
-      {{ successMessage }}
-    </div>
+    <div class="form-section">
+      <div class="form-card">
+        <div class="form-header">
+          <i-lucide-store class="header-icon"></i-lucide-store>
+          <div>
+            <h1>Crear Tienda</h1>
+            <p class="subtitle">Completa el formulario para comenzar</p>
+          </div>
+        </div>
 
-    <div *ngIf="errorMessage" class="alert alert-error">
-      {{ errorMessage }}
-    </div>
+        <div class="mode-toggle">
+          <button 
+            (click)="toggleMode()" 
+            [class.active]="!useChatMode"
+            class="mode-button">
+            <i-lucide-file-text class="button-icon"></i-lucide-file-text>
+            Formulario
+          </button>
+          <button 
+            (click)="toggleMode()" 
+            [class.active]="useChatMode"
+            class="mode-button">
+            <i-lucide-message-square class="button-icon"></i-lucide-message-square>
+            Chat Guiado
+          </button>
+        </div>
 
-    <!-- Formulario tradicional -->
-    <form *ngIf="!useChatMode" (ngSubmit)="onSubmit()" [class.disabled]="isLoading">
-      <div class="form-group">
-        <label for="name">Nombre de la Tienda *</label>
-        <input 
-          type="text" 
-          id="name" 
-          name="name"
-          [(ngModel)]="storeData.name" 
-          required
-          placeholder="Ej: Mi Tienda Increíble"
-        >
-      </div>
+        <div *ngIf="successMessage" class="alert alert-success">
+          <i-lucide-check class="alert-icon"></i-lucide-check>
+          {{ successMessage }}
+        </div>
 
-      <div class="form-group">
-        <label for="email">Email de la Tienda *</label>
-        <input 
-          type="email" 
-          id="email" 
-          name="email"
-          [(ngModel)]="storeData.email" 
-          required
-          placeholder="tienda@ejemplo.com"
-        >
-      </div>
+        <div *ngIf="errorMessage" class="alert alert-error">
+          <i-lucide-x class="alert-icon"></i-lucide-x>
+          {{ errorMessage }}
+        </div>
 
-      <div class="form-group">
-        <label for="owner_name">Nombre del Propietario *</label>
-        <input 
-          type="text" 
-          id="owner_name" 
-          name="owner_name"
-          [(ngModel)]="storeData.owner_name" 
-          required
-          placeholder="Juan Pérez"
-        >
-      </div>
+        <!-- Formulario tradicional -->
+        <form *ngIf="!useChatMode" (ngSubmit)="onSubmit()" [class.disabled]="isLoading">
+          <div class="form-group">
+            <label for="name">
+              <i-lucide-store class="label-icon"></i-lucide-store>
+              Nombre de la Tienda *
+            </label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name"
+              [(ngModel)]="storeData.name" 
+              required
+              placeholder="Ej: Mi Tienda Increíble"
+            >
+          </div>
 
-      <div class="form-group">
-        <label for="ruc">RUC *</label>
-        <input 
-          type="text" 
-          id="ruc" 
-          name="ruc"
-          [(ngModel)]="storeData.ruc" 
-          required
-          placeholder="Ej: 12345678901"
-          maxlength="11"
-        >
-        <small class="help-text">Ingresa tu RUC de 11 dígitos</small>
-      </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">
+                <i-lucide-mail class="label-icon"></i-lucide-mail>
+                Email *
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email"
+                [(ngModel)]="storeData.email" 
+                required
+                placeholder="tienda@ejemplo.com"
+              >
+            </div>
 
-      <div class="form-group">
-        <label for="phone">Teléfono</label>
-        <input 
-          type="tel" 
-          id="phone" 
-          name="phone"
-          [(ngModel)]="storeData.phone" 
-          placeholder="Ej: +51 999 999 999"
-        >
-      </div>
+            <div class="form-group">
+              <label for="phone">
+                <i-lucide-phone class="label-icon"></i-lucide-phone>
+                Teléfono
+              </label>
+              <input 
+                type="tel" 
+                id="phone" 
+                name="phone"
+                [(ngModel)]="storeData.phone" 
+                placeholder="+51 999 999 999"
+              >
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="description">Descripción</label>
-        <textarea 
-          id="description" 
-          name="description"
-          [(ngModel)]="storeData.description" 
-          rows="4"
-          placeholder="Describe tu tienda y los productos que vendes..."
-        ></textarea>
-      </div>
+          <div class="form-group">
+            <label for="owner_name">
+              <i-lucide-user class="label-icon"></i-lucide-user>
+              Nombre del Propietario *
+            </label>
+            <input 
+              type="text" 
+              id="owner_name" 
+              name="owner_name"
+              [(ngModel)]="storeData.owner_name" 
+              required
+              placeholder="Juan Pérez"
+            >
+          </div>
 
-      <div class="form-actions">
-        <button type="button" (click)="onCancel()" class="btn-cancel">
-          Cancelar
-        </button>
-        <button type="submit" class="btn-submit" [disabled]="isLoading">
-          <span *ngIf="!isLoading">Crear Tienda</span>
-          <span *ngIf="isLoading">Creando...</span>
-        </button>
-      </div>
-    </form>
+          <div class="form-group">
+            <label for="ruc">
+              <i-lucide-file-text class="label-icon"></i-lucide-file-text>
+              RUC *
+            </label>
+            <input 
+              type="text" 
+              id="ruc" 
+              name="ruc"
+              [(ngModel)]="storeData.ruc" 
+              required
+              placeholder="12345678901"
+              maxlength="11"
+            >
+            <small class="help-text">Ingresa tu RUC de 11 dígitos</small>
+          </div>
 
-    <!-- Chat guiado para crear tienda -->
-    <div *ngIf="useChatMode" class="chat-mode">
-      <app-store-assistant></app-store-assistant>
-      <div class="chat-actions">
-        <button (click)="onCancel()" class="btn-cancel">Cancelar</button>
+          <div class="form-group">
+            <label for="description">
+              <i-lucide-file-text class="label-icon"></i-lucide-file-text>
+              Descripción
+            </label>
+            <textarea 
+              id="description" 
+              name="description"
+              [(ngModel)]="storeData.description" 
+              rows="3"
+              placeholder="Describe brevemente tu tienda..."
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" (click)="onCancel()" class="btn-cancel">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="isLoading">
+              <span *ngIf="!isLoading">Crear Tienda</span>
+              <span *ngIf="isLoading">Creando...</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Chat guiado para crear tienda -->
+        <div *ngIf="useChatMode" class="chat-mode">
+          <app-store-assistant></app-store-assistant>
+          <div class="chat-actions">
+            <button (click)="onCancel()" class="btn-cancel">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
