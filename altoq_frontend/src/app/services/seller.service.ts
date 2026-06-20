@@ -58,13 +58,11 @@ export class SellerService {
   }
 
   updateStore(storeData: any): Observable<any> {
-    const headers = this.getHeaders();
-    const params = this.getParams();
-    
-    return this.http.put(`${this.apiUrl}/update-store`, storeData, {
-      headers: headers,
-      params: params
-    });
+    return this.http.put(`${this.apiUrl}/my-store`, storeData, { params: this.getParams() });
+  }
+
+  chatWithAiProductAssistant(messages: any[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/ai-product-assistant/chat`, { messages }, { params: this.getParams() });
   }
 
   chatWithAiStoreAssistant(messages: { sender: string; content: string }[]): Observable<any> {

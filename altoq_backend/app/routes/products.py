@@ -34,7 +34,7 @@ def search_products(q: str, skip: int = 0, limit: int = 100, db: Session = Depen
 @router.get("/", response_model=List[Product])
 def get_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Obtener lista de productos"""
-    products = db.query(ProductModel).offset(skip).limit(limit).all()
+    products = db.query(ProductModel).order_by(ProductModel.id.desc()).offset(skip).limit(limit).all()
     return products
 
 @router.get("/{product_id}", response_model=Product)

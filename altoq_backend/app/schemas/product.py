@@ -13,6 +13,8 @@ class ProductBase(BaseModel):
     rating_count: int = 0
     stock: int = 0
     specifications: Optional[Dict[str, str]] = None
+    store_id: Optional[int] = None
+    category_id: Optional[int] = None
 
 class ProductCreate(ProductBase):
     pass
