@@ -1,83 +1,108 @@
-<div class="assistant-container">
+<div class="max-w-3xl mx-auto my-8 bg-white rounded-xl shadow-md overflow-hidden flex flex-col font-sans border border-gray-200">
   <!-- Header -->
-  <div class="assistant-header">
-    <div class="header-title-area">
-      <div class="header-avatar">💼</div>
-      <div class="header-info">
-        <h2>Asistente para Crear Tienda</h2>
-        <span class="header-status">
-          <span class="status-dot"></span> Activo
-        </span>
+  <div class="bg-slate-900 text-white px-6 py-5 flex justify-between items-center">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 text-gray-300 border border-slate-700">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+        </svg>
+      </div>
+      <div class="flex flex-col">
+        <h2 class="text-base font-semibold tracking-wide m-0">Asistente de Configuración Comercial</h2>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-xs text-slate-300 font-medium uppercase tracking-wider">En línea</span>
+        </div>
       </div>
     </div>
-    <button (click)="resetConversation()" class="reset-btn" title="Reiniciar conversación">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="btn-icon">
-        <path d="M4 12a8 8 0 0 1 15.15-3.55M4 12a8 8 0 0 0 15.15 3.55M4.5 9V4.5H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <button (click)="resetConversation()" class="p-2 rounded-md hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700 text-slate-300" title="Reiniciar sesión">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
       </svg>
-      <span>Reiniciar</span>
     </button>
   </div>
 
   <!-- Messages -->
-  <div class="chat-messages">
-    <div *ngFor="let message of messages"
-         [class]="message.sender === 'user' ? 'message-row user-message' : 'message-row assistant-message'">
-      <div class="message-content">
-        <div [class]="message.sender === 'user' ? 'avatar user-avatar' : 'avatar assistant-avatar'">
-          {{ message.sender === 'user' ? '�' : '💼' }}
+  <div class="flex-1 h-[500px] overflow-y-auto p-8 bg-gray-50 flex flex-col gap-6">
+    <div *ngIf="messages.length === 0" class="text-center bg-white border border-gray-200 p-8 rounded-lg shadow-sm mb-4 max-w-lg mx-auto">
+      <h3 class="text-gray-800 font-semibold text-lg mb-2">Bienvenido a ALTOQ</h3>
+      <p class="text-gray-500 text-sm">El asistente le guiará en el proceso de configuración de su tienda. Por favor, proporcione la información solicitada de manera clara.</p>
+    </div>
+
+    <div *ngFor="let message of messages" class="flex w-full" [ngClass]="message.sender === 'user' ? 'justify-end' : 'justify-start'">
+      <div class="flex items-end gap-3 max-w-[85%]" [ngClass]="message.sender === 'user' ? 'flex-row-reverse' : ''">
+        
+        <!-- Avatar -->
+        <div class="flex items-center justify-center w-8 h-8 rounded-full shrink-0" 
+             [ngClass]="message.sender === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-white border border-gray-200 text-slate-800 shadow-sm'">
+          <ng-container *ngIf="message.sender === 'user'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+              <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+            </svg>
+          </ng-container>
+          <ng-container *ngIf="message.sender !== 'user'">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+            </svg>
+          </ng-container>
         </div>
-        <div class="message-bubble">
-          <p>{{ message.content }}</p>
+
+        <!-- Bubble -->
+        <div class="px-5 py-3.5 text-[0.95rem] leading-relaxed rounded-2xl"
+             [ngClass]="message.sender === 'user' ? 'bg-slate-900 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm border border-gray-200/60'">
+          <p class="whitespace-pre-wrap m-0 font-normal">{{ message.content }}</p>
         </div>
       </div>
     </div>
 
     <!-- Typing Indicator -->
-    <div *ngIf="isTyping" class="message-row assistant-message">
-      <div class="message-content">
-        <div class="avatar assistant-avatar">💼</div>
-        <div class="message-bubble typing-bubble">
-          <div class="typing-indicator-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+    <div *ngIf="isTyping" class="flex w-full justify-start">
+      <div class="flex items-end gap-3 max-w-[80%]">
+        <div class="flex items-center justify-center w-8 h-8 rounded-full shrink-0 bg-white border border-gray-200 text-slate-800 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+          </svg>
+        </div>
+        <div class="px-5 py-4 bg-gray-100 rounded-2xl rounded-bl-sm border border-gray-200/60 flex gap-1.5 items-center">
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Input Area -->
-  <div class="input-area">
-    <div class="input-wrapper">
+  <div class="p-5 bg-white border-t border-gray-200 flex items-center gap-3">
+    <div class="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus-within:bg-white focus-within:border-slate-500 focus-within:ring-1 focus-within:ring-slate-500 transition-all">
       <input 
         type="text" 
         [(ngModel)]="userInput" 
         (keyup.enter)="handleUserInput(userInput); userInput = ''"
-        placeholder="Escribe tu respuesta aquí..."
-        class="message-input"
+        placeholder="Escriba su respuesta aquí..."
+        class="w-full bg-transparent border-none text-gray-800 text-[0.95rem] outline-none placeholder:text-gray-400 disabled:opacity-50"
         [disabled]="isCreatingStore"
       >
     </div>
 
     <button (click)="handleUserInput(userInput); userInput = ''" 
-            class="send-btn" 
-            [disabled]="isCreatingStore"
+            class="flex items-center justify-center w-12 h-12 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+            [disabled]="isCreatingStore || !userInput.trim()"
             title="Enviar">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="send-icon">
-        <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.9429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.0574073 C3.34915502,0.5861152 2.40734225,0.424617983 1.77946707,0.9429026 C0.994623095,1.4141948 0.837654301,2.5074181 1.15159189,3.29290497 L3.03521743,9.73394788 C3.03521743,9.89104527 3.34915502,10.0481427 3.50612381,10.0481427 L16.6915026,10.8336295 C16.6915026,10.8336295 17.1624089,10.8336295 17.1624089,11.3049216 C17.1624089,11.7762138 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+        <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
       </svg>
     </button>
 
     <button 
       *ngIf="currentQuestion === 'confirm_creation'" 
       (click)="createStore()" 
-      class="confirm-btn"
+      class="flex items-center justify-center gap-2 px-6 h-12 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
       [disabled]="isCreatingStore">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="confirm-icon" *ngIf="!isCreatingStore">
-        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+      <svg *ngIf="!isCreatingStore" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
       </svg>
-      <span>{{ isCreatingStore ? 'Creando...' : 'Crear Tienda' }}</span>
+      <span>{{ isCreatingStore ? 'Procesando...' : 'Confirmar Registro' }}</span>
     </button>
   </div>
 </div>

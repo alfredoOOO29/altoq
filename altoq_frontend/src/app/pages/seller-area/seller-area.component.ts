@@ -61,23 +61,8 @@ export class SellerAreaComponent implements OnInit {
   }
 
   determineTheme(): void {
-    if (!this.store || !this.store.description) {
-      this.storeTheme = 'default';
-      return;
-    }
-
-    const description = this.store.description.toLowerCase();
-    
-    if (description.includes('torta') || description.includes('postre') || description.includes('pastel') || description.includes('dulce')) {
-      this.storeTheme = 'bakery';
-    } else if (description.includes('ropa') || description.includes('moda') || description.includes('vestimenta')) {
-      this.storeTheme = 'fashion';
-    } else if (description.includes('hogar') || description.includes('jardin') || description.includes('mueble')) {
-      this.storeTheme = 'home';
-    } else if (description.includes('alimento') || description.includes('comida') || description.includes('bebida')) {
-      this.storeTheme = 'food';
-    } else if (description.includes('tecnologia') || description.includes('electro') || description.includes('gadget')) {
-      this.storeTheme = 'tech';
+    if (this.store && this.store.theme) {
+      this.storeTheme = this.store.theme;
     } else {
       this.storeTheme = 'default';
     }
