@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService } from '../../services/seller.service';
 import { ProductService } from '../../services/product.service';
+import { ToastService } from '../../services/toast.service';
 import { ConversationalAssistantComponent } from '../../components/conversational-assistant/conversational-assistant.component';
 
 @Component({
@@ -23,7 +24,6 @@ export class SellerAreaComponent implements OnInit {
   isEditingStore: boolean = false;
   editedStore: any = {};
   isSaving: boolean = false;
-  notification: { show: boolean; message: string; type: 'success' | 'error' } = { show: false, message: '', type: 'success' };
   showProductsView: boolean = false;
   showEditProductModal: boolean = false;
   editingProduct: any = {};
@@ -31,7 +31,8 @@ export class SellerAreaComponent implements OnInit {
 
   constructor(
     private sellerService: SellerService,
-    private productService: ProductService
+    private productService: ProductService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -71,23 +72,7 @@ export class SellerAreaComponent implements OnInit {
   loadStoreProducts(): void {
     this.productService.getProducts().subscribe({
       next: (products) => {
-        console.log('Seller Area - All products:', products);
-        console.log('Seller Area - Store ID:', this.store?.id);
-        console.log('Seller Area - Store:', this.store);
-
-        // Filtrar productos por store_id (manejar string vs number)
-        this.storeProducts = products.filter(p => {
-          const productStoreId = p.store_id;
-          const currentStoreId = this.store?.id;
-          console.log(`Seller Area - Comparing product store_id (${productStoreId} type: ${typeof productStoreId}) with store id (${currentStoreId} type: ${typeof currentStoreId})`);
-          // Comparar como números para evitar problemas de tipo
-          const match = Number(productStoreId) === Number(currentStoreId);
-          console.log(`Seller Area - Match result: ${match}`);
-          return match;
-        });
-
-        console.log('Seller Area - Filtered products:', this.storeProducts);
-        console.log('Seller Area - Filtered products count:', this.storeProducts.length);
+        this.storeProducts = products.filter(p => Number(p.store_id) === Number(this.store?.id));
       },
       error: (error) => {
         console.error('Error loading products:', error);
@@ -115,7 +100,7 @@ export class SellerAreaComponent implements OnInit {
 
   saveProductChanges(): void {
     if (!this.editingProduct.name || !this.editingProduct.price) {
-      this.showNotification('Por favor, completa el nombre y precio del producto', 'error');
+      this.toastService.show('Por favor, completa el nombre y precio del producto', 'error');
       return;
     }
 
@@ -123,16 +108,15 @@ export class SellerAreaComponent implements OnInit {
 
     this.productService.updateProduct(this.editingProduct.id, this.editingProduct).subscribe({
       next: (response) => {
-        console.log('Product updated successfully:', response);
         this.loadStoreProducts();
         this.closeEditModal();
         this.isSavingProduct = false;
-        this.showNotification('Producto actualizado exitosamente', 'success');
+        this.toastService.show('Producto actualizado exitosamente', 'success');
       },
       error: (error) => {
         console.error('Error updating product:', error);
         this.isSavingProduct = false;
-        this.showNotification('Error al actualizar el producto. Por favor, intenta nuevamente.', 'error');
+        this.toastService.show('Error al actualizar el producto. Por favor, intenta nuevamente.', 'error');
       }
     });
   }
@@ -144,19 +128,17 @@ export class SellerAreaComponent implements OnInit {
 
     this.productService.deleteProduct(productId).subscribe({
       next: () => {
-        console.log('Product deleted successfully');
         this.loadStoreProducts();
-        this.showNotification('Producto eliminado exitosamente', 'success');
+        this.toastService.show('Producto eliminado exitosamente', 'success');
       },
       error: (error) => {
         console.error('Error deleting product:', error);
-        this.showNotification('Error al eliminar el producto. Por favor, intenta nuevamente.', 'error');
+        this.toastService.show('Error al eliminar el producto. Por favor, intenta nuevamente.', 'error');
       }
     });
   }
 
   onProductCreated(): void {
-    console.log('Product created event received, reloading products...');
     this.loadStoreProducts();
   }
 
@@ -177,16 +159,9 @@ export class SellerAreaComponent implements OnInit {
     }
   }
 
-  showNotification(message: string, type: 'success' | 'error'): void {
-    this.notification = { show: true, message, type };
-    setTimeout(() => {
-      this.notification.show = false;
-    }, 4000);
-  }
-
   saveStoreChanges(): void {
     if (!this.editedStore.name || !this.editedStore.email) {
-      this.showNotification('Por favor, completa el nombre y email de la tienda', 'error');
+      this.toastService.show('Por favor, completa el nombre y email de la tienda', 'error');
       return;
     }
 
@@ -199,12 +174,12 @@ export class SellerAreaComponent implements OnInit {
         this.determineTheme();
         this.isEditingStore = false;
         this.isSaving = false;
-        this.showNotification('Información de la tienda actualizada exitosamente', 'success');
+        this.toastService.show('Información de la tienda actualizada exitosamente', 'success');
       },
       error: (error) => {
         console.error('Error updating store:', error);
         this.isSaving = false;
-        this.showNotification('Error al actualizar la información de la tienda. Por favor, intenta nuevamente.', 'error');
+        this.toastService.show('Error al actualizar la información de la tienda. Por favor, intenta nuevamente.', 'error');
       }
     });
   }

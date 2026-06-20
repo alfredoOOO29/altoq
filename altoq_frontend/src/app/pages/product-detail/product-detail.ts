@@ -113,7 +113,7 @@ export class ProductDetailComponent implements OnInit {
     });
     
     // Optional: Feedback to user about color
-    console.log(`Added ${this.quantity} x ${this.product.name} (${this.selectedColor}) to cart`);
+    // (CartService already shows a toast message for the basic item)
   }
 
   getStars(): number[] {

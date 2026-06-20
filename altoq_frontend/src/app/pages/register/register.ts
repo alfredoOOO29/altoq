@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 import { environment } from '../../../environments/environment.development';
 
 @Component({
@@ -22,7 +23,8 @@ export class RegisterComponent implements OnInit {
     private authService: AuthService,
     private ngZone: NgZone,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toastService: ToastService
   ) {
     this.registerForm = this.fb.group({
       name: ['', [Validators.required]],
@@ -55,11 +57,13 @@ export class RegisterComponent implements OnInit {
       this.authService.googleLogin(response.credential).subscribe({
         next: () => {
           this.loading = false;
+          this.toastService.show('¡Registro exitoso!', 'success');
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
           this.router.navigateByUrl(returnUrl);
         },
         error: (err) => {
           this.error = err.error?.detail || 'Error al registrarse con Google';
+          this.toastService.show(this.error, 'error');
           this.loading = false;
         }
       });
@@ -84,11 +88,13 @@ export class RegisterComponent implements OnInit {
     this.authService.register(registerData).subscribe({
       next: () => {
         this.loading = false;
+        this.toastService.show('¡Registro exitoso!', 'success');
         const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
         this.error = err.error?.detail || 'Error al registrarse';
+        this.toastService.show(this.error, 'error');
         this.loading = false;
       }
     });
