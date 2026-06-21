@@ -50,6 +50,18 @@ export class AuthService {
       );
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  verifyCode(email: string, code: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/verify-code`, { email, code });
+  }
+
+  resetPassword(email: string, code: string, newPassword: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, { email, code, new_password: newPassword });
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
