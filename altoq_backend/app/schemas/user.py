@@ -53,3 +53,19 @@ UserResponse = User
 class Token(BaseModel):
     token: str
     user: User
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class VerifyCodeRequest(BaseModel):
+    email: str
+    code: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    code: str
+    new_password: str
+

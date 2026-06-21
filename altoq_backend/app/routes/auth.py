@@ -5,7 +5,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from ..database import get_db
 from ..models.user import User as UserModel
-from ..schemas.user import UserCreate, UserLogin, Token, User
+from ..schemas.user import UserCreate, UserLogin, Token, User, ForgotPasswordRequest, VerifyCodeRequest, ResetPasswordRequest
 from ..utils.security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 import os
 
@@ -129,3 +129,95 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         "token": access_token,
         "user": User.model_validate(db_user)
     }
+
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Solicitar recuperación de contraseña (envía un código de 6 dígitos)"""
+    # 1. Verificar si el usuario existe
+    db_user = db.query(UserModel).filter(UserModel.email == req.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="El correo electrónico no está registrado")
+
+    # 2. Generar código de 6 dígitos
+    import random
+    code = f"{random.randint(100000, 999999)}"
+
+    # 3. Invalidar códigos anteriores no usados para este email
+    from datetime import datetime, timedelta
+    from ..models.password_reset import PasswordResetCode
+
+    db.query(PasswordResetCode).filter(
+        PasswordResetCode.email == req.email,
+        PasswordResetCode.is_used == False
+    ).update({"is_used": True})
+
+    # 4. Guardar en BD con expiración de 15 minutos
+    expires_at = datetime.utcnow() + timedelta(minutes=15)
+    reset_entry = PasswordResetCode(
+        email=req.email,
+        code=code,
+        expires_at=expires_at
+    )
+    db.add(reset_entry)
+    db.commit()
+
+    # 5. Enviar correo (o simular en desarrollo)
+    from ..utils.email import send_recovery_email
+    send_recovery_email(req.email, code)
+
+    return {"message": "Código de verificación enviado correctamente"}
+
+
+@router.post("/verify-code")
+def verify_code(req: VerifyCodeRequest, db: Session = Depends(get_db)):
+    """Verificar si el código es correcto y no ha expirado"""
+    from datetime import datetime
+    from ..models.password_reset import PasswordResetCode
+
+    # Buscar código válido
+    db_code = db.query(PasswordResetCode).filter(
+        PasswordResetCode.email == req.email,
+        PasswordResetCode.code == req.code,
+        PasswordResetCode.is_used == False,
+        PasswordResetCode.expires_at > datetime.utcnow()
+    ).order_by(PasswordResetCode.id.desc()).first()
+
+    if not db_code:
+        raise HTTPException(status_code=400, detail="Código inválido o expirado")
+
+    return {"message": "Código verificado correctamente"}
+
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Cambiar la contraseña usando el código verificado"""
+    from datetime import datetime
+    from ..models.password_reset import PasswordResetCode
+
+    # 1. Validar el código de nuevo
+    db_code = db.query(PasswordResetCode).filter(
+        PasswordResetCode.email == req.email,
+        PasswordResetCode.code == req.code,
+        PasswordResetCode.is_used == False,
+        PasswordResetCode.expires_at > datetime.utcnow()
+    ).order_by(PasswordResetCode.id.desc()).first()
+
+    if not db_code:
+        raise HTTPException(status_code=400, detail="Código inválido o expirado")
+
+    # 2. Obtener el usuario y cambiar password
+    db_user = db.query(UserModel).filter(UserModel.email == req.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Hashear nueva contraseña
+    db_user.password = get_password_hash(req.new_password)
+    
+    # Marcar código como usado
+    db_code.is_used = True
+
+    db.commit()
+
+    return {"message": "Contraseña actualizada correctamente"}
+
