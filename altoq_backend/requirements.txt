@@ -12,3 +12,4 @@ google-auth==2.31.0
 google-auth-oauthlib==1.2.0
 alembic==1.14.1
 google-generativeai>=0.8.0
+email-validator>=2.0.0
