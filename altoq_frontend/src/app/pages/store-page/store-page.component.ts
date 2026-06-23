@@ -70,7 +70,8 @@ export class StorePageComponent implements OnInit {
       quantity: 1,
       price: product.price,
       name: product.name,
-      image: product.image
+      image: product.image,
+      storeId: product.store_id
     });
   }
 

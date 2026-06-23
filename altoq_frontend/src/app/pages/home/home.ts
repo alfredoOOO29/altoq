@@ -37,7 +37,8 @@ export class HomeComponent {
       quantity: 1,
       price: product.price,
       name: product.name,
-      image: product.image
+      image: product.image,
+      storeId: product.store_id
     });
   }
 }

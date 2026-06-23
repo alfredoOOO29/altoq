@@ -38,3 +38,8 @@ class User(Base):
     def has_store(self) -> bool:
         """Returns True if the user has at least one registered store."""
         return len(self.stores) > 0
+
+    @property
+    def store_id(self) -> Optional[int]:
+        """Returns the ID of the first store if the user has one."""
+        return self.stores[0].id if self.stores else None

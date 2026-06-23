@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink} from '@angular/router';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { Address, AddressCreate, UserUpdate, PasswordChange } from '../../models/user-profile';
@@ -10,24 +9,24 @@ import { User } from '../../models/auth';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
 export class ProfileComponent implements OnInit {
   user: User | null = null;
   addresses: Address[] = [];
-  
+
   activeTab: 'profile' | 'password' | 'addresses' = 'profile';
-  
+
   profileForm: FormGroup;
   passwordForm: FormGroup;
   addressForm: FormGroup;
-  
+
   loading = false;
   message = '';
   error = '';
-  
+
   editingAddress: Address | null = null;
   showAddressForm = false;
 
@@ -60,11 +59,9 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    // First, get user from AuthService (already logged in)
     this.authService.user$.subscribe(user => {
       if (user) {
         this.user = user;
-        // Prefill form with current user data
         this.profileForm.patchValue({
           name: user.name,
           phone: user.phone || ''
@@ -72,7 +69,6 @@ export class ProfileComponent implements OnInit {
       }
     });
 
-    // Then try to load fresh data from server
     this.loadProfile();
     this.loadAddresses();
   }
@@ -102,7 +98,6 @@ export class ProfileComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        // Don't show error if we already have user data from AuthService
         if (!this.user) {
           this.error = 'Error al cargar perfil';
         }
@@ -120,7 +115,6 @@ export class ProfileComponent implements OnInit {
     this.userService.updateProfile(data).subscribe({
       next: (user) => {
         this.user = user;
-        // Update user in AuthService
         this.authService.user$.subscribe(currentUser => {
           if (currentUser) {
             const updated = { ...currentUser, name: user.name, phone: user.phone };
@@ -169,7 +163,6 @@ export class ProfileComponent implements OnInit {
         this.addresses = addresses;
       },
       error: (err) => {
-        // Silently fail - addresses are optional
         console.log('Could not load addresses:', err);
       }
     });
@@ -178,7 +171,7 @@ export class ProfileComponent implements OnInit {
   openAddressForm(address?: Address) {
     this.editingAddress = address || null;
     this.showAddressForm = true;
-    
+
     if (address) {
       this.addressForm.patchValue(address);
     } else {
@@ -254,4 +247,5 @@ export class ProfileComponent implements OnInit {
       }
     });
   }
+
 }

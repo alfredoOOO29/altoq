@@ -74,4 +74,18 @@ export class SellerService {
       params: params
     });
   }
+
+  getSellerOrders(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/orders`, {
+      params: this.getParams(),
+      headers: this.getHeaders()
+    });
+  }
+
+  cancelSellerOrder(orderId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/orders/${orderId}/cancel`, null, {
+      params: this.getParams(),
+      headers: this.getHeaders()
+    });
+  }
 }

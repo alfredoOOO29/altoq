@@ -29,4 +29,4 @@ class DeliveryCode(Base):
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
-    order: Mapped["Order"] = relationship("Order", back_populates="delivery_code")
+    order: Mapped["Order"] = relationship("Order", back_populates="delivery")

@@ -109,8 +109,8 @@ export class ProductDetailComponent implements OnInit {
       quantity: this.quantity,
       price: this.product.price,
       name: this.product.name,
-      image: this.product.image
-      // Note: Color is not yet supported by CartItem interface, but is tracked locally
+      image: this.product.image,
+      storeId: this.product.store_id
     });
     
     // Optional: Feedback to user about color

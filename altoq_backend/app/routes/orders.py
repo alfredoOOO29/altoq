@@ -1,64 +1,193 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime, timedelta
+import random
+import string
+
 from ..database import get_db
 from ..models.order import Order as OrderModel
+from ..models.delivery_code import DeliveryCode
+from ..models.user import User
+from ..models.product import Product
+from ..models.store import Store
 from ..schemas.order import Order, OrderCreate
+from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
+
+def _generate_code(length: int = 6) -> str:
+    """Genera un código alfanumérico único."""
+    characters = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+
+def _create_delivery_code(db: Session, order_id: int) -> DeliveryCode:
+    """Crea y persiste un código de entrega único para una orden."""
+    code = _generate_code()
+    while db.query(DeliveryCode).filter(DeliveryCode.code == code).first():
+        code = _generate_code()
+
+    new_code = DeliveryCode(
+        order_id=order_id,
+        code=code,
+        is_used=False,
+        created_at=datetime.utcnow(),
+        expires_at=datetime.utcnow() + timedelta(days=30),
+    )
+    db.add(new_code)
+    db.commit()
+    db.refresh(new_code)
+    return new_code
+
+
 @router.post("/", response_model=Order)
-def create_order(order: OrderCreate, db: Session = Depends(get_db)):
-    """Crear una nueva orden"""
-    # Convertir products a JSON
+def create_order(
+    order: OrderCreate,
+    current_user_email: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crear una nueva orden y generar su código de entrega automáticamente."""
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Prevenir que un vendedor compre su propio producto
+    user_store = db.query(Store).filter(Store.user_id == user.id).first()
+    if user_store:
+        order_product_ids = [p.productId for p in order.products]
+        own_products = db.query(Product).filter(
+            Product.id.in_(order_product_ids),
+            Product.store_id == user_store.id
+        ).all()
+        if own_products:
+            product_names = ", ".join([p.name for p in own_products])
+            raise HTTPException(
+                status_code=400,
+                detail=f"No puedes comprar tus propios productos: {product_names}"
+            )
+
     products_json = [item.dict() for item in order.products]
-    
+
     db_order = OrderModel(
-        user_id=order.user_id,
+        user_id=user.id,
         products=products_json,
         total_amount=order.total_amount,
-        status=order.status,
+        status="pending",
         shipping_address=order.shipping_address,
-        contact_phone=order.contact_phone
+        contact_phone=order.contact_phone,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
+
+    # Generar código de entrega automáticamente
+    delivery = _create_delivery_code(db, db_order.id)
+
+    # Adjuntar el código al response (campo virtual)
+    db_order.delivery_code = delivery.code  # type: ignore[attr-defined]
     return db_order
 
+
 @router.get("/user", response_model=List[Order])
-def get_user_orders(user_id: int = 1, db: Session = Depends(get_db)):
-    """Obtener órdenes de un usuario"""
-    orders = db.query(OrderModel).filter(OrderModel.user_id == user_id).all()
+def get_user_orders(
+    current_user_email: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Obtener las órdenes del usuario autenticado."""
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    orders = db.query(OrderModel).filter(
+        OrderModel.user_id == user.id
+    ).order_by(OrderModel.created_at.desc()).all()
+
+    # Adjuntar el código de entrega a cada orden
+    for o in orders:
+        dc = db.query(DeliveryCode).filter(DeliveryCode.order_id == o.id).first()
+        o.delivery_code = dc.code if dc else None  # type: ignore[attr-defined]
+        o.client_name = o.user.name if o.user else None  # type: ignore[attr-defined]
+        o.client_email = o.user.email if o.user else None  # type: ignore[attr-defined]
+
     return orders
 
+
 @router.get("/{order_id}", response_model=Order)
-def get_order(order_id: int, db: Session = Depends(get_db)):
-    """Obtener una orden por ID"""
+def get_order(
+    order_id: int,
+    current_user_email: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Obtener una orden por ID (solo el propietario puede verla)."""
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
+    if order.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Sin acceso a esta orden")
+
+    dc = db.query(DeliveryCode).filter(DeliveryCode.order_id == order.id).first()
+    order.delivery_code = dc.code if dc else None  # type: ignore[attr-defined]
+    order.client_name = order.user.name if order.user else None  # type: ignore[attr-defined]
+    order.client_email = order.user.email if order.user else None  # type: ignore[attr-defined]
     return order
+
 
 @router.put("/{order_id}", response_model=Order)
-def update_order_status(order_id: int, status: str, db: Session = Depends(get_db)):
-    """Actualizar estado de una orden"""
+def update_order_status(
+    order_id: int,
+    status: str,
+    current_user_email: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Actualizar estado de una orden."""
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
-    
+    if order.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Sin acceso a esta orden")
+
     order.status = status
+    order.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(order)
+
+    dc = db.query(DeliveryCode).filter(DeliveryCode.order_id == order.id).first()
+    order.delivery_code = dc.code if dc else None  # type: ignore[attr-defined]
+    order.client_name = order.user.name if order.user else None  # type: ignore[attr-defined]
+    order.client_email = order.user.email if order.user else None  # type: ignore[attr-defined]
     return order
 
+
 @router.delete("/{order_id}")
-def cancel_order(order_id: int, db: Session = Depends(get_db)):
-    """Cancelar una orden"""
+def cancel_order(
+    order_id: int,
+    current_user_email: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancelar una orden."""
+    user = db.query(User).filter(User.email == current_user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
-    
+    if order.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Sin acceso a esta orden")
+
     order.status = "canceled"
+    order.updated_at = datetime.utcnow()
     db.commit()
     return {"message": "Orden cancelada"}

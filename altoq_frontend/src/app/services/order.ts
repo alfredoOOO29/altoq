@@ -24,24 +24,23 @@ export class OrderService {
   }
 
   createOrder(order: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Observable<Order> {
-    return this.http.post<Order>(this.apiUrl, order, { headers: this.getHeaders() });
+    return this.http.post<Order>(`${this.apiUrl}/`, order, { headers: this.getHeaders() });
   }
 
+  /** Obtiene los pedidos del usuario autenticado (usa el token, no user_id). */
   getUserOrders(): Observable<Order[]> {
     return this.http.get<Order[]>(`${this.apiUrl}/user`, { headers: this.getHeaders() });
-  } 
+  }
 
-  getOrderById(id:number): Observable<Order> {
+  getOrderById(id: number): Observable<Order> {
     return this.http.get<Order>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
-  updateOrderStatus(id: number , status: string): Observable<Order> {
-    return this.http.put<Order>(`${this.apiUrl}/${id}/status`, { status }, { headers: this.getHeaders() });
+  updateOrderStatus(id: number, status: string): Observable<Order> {
+    return this.http.put<Order>(`${this.apiUrl}/${id}?status=${status}`, {}, { headers: this.getHeaders() });
   }
 
-  cancelOrder(id:number): Observable<void> {
+  cancelOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
-
-
-}
+}

@@ -56,6 +56,12 @@ export class CartService {
       return;
     }
 
+    const user = this.authService.userValue;
+    if (user && user.store_id && item.storeId && Number(user.store_id) === Number(item.storeId)) {
+      this.toastService.show('No puedes comprar tus propios productos', 'error');
+      return;
+    }
+
     const currentCart = this.cart.value;
     const existingItem = currentCart.items.find(i => i.productId === item.productId);
 

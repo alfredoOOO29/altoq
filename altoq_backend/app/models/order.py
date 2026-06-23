@@ -34,4 +34,4 @@ class Order(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="orders")
     chats: Mapped[List["Chat"]] = relationship("Chat", back_populates="order")
-    delivery_code: Mapped[Optional["DeliveryCode"]] = relationship("DeliveryCode", back_populates="order", uselist=False)
+    delivery: Mapped[Optional["DeliveryCode"]] = relationship("DeliveryCode", back_populates="order", uselist=False)

@@ -11,7 +11,7 @@ import { Observable, switchMap, tap } from 'rxjs';
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCard],
+  imports: [CommonModule, ProductCard],
   templateUrl: './category.html',
   styleUrl: './category.css'
 })

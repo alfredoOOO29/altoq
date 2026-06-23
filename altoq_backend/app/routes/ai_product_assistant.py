@@ -105,7 +105,7 @@ def _create_product_in_db(
         store_id=store.id,
         store_name=store.name,
         stock=1,
-        image="https://via.placeholder.com/300x200?text=Nuevo+Producto"
+        image="https://placehold.co/300x200?text=Nuevo+Producto"
     )
     db.add(new_product)
     db.commit()

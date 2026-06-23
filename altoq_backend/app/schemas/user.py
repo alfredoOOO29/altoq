@@ -43,6 +43,7 @@ class User(UserBase):
     id: int
     created_at: Optional[datetime] = None
     has_store: bool = False
+    store_id: Optional[int] = None
 
     class Config:
         from_attributes = True

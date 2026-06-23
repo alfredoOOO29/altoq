@@ -9,7 +9,7 @@ import { Observable, switchMap, map } from 'rxjs';
 @Component({
   selector: 'app-search-results',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCard],
+  imports: [CommonModule, ProductCard],
   templateUrl: './search-results.html',
   styleUrl: './search-results.css'
 })

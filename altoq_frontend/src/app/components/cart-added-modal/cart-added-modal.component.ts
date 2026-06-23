@@ -35,7 +35,7 @@ import { Subscription } from 'rxjs';
         <!-- Product Summary -->
         <div class="flex gap-4 mb-8" *ngIf="addedItem">
           <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-            <img [src]="addedItem.image || 'https://via.placeholder.com/150'" [alt]="addedItem.name" class="w-full h-full object-cover">
+            <img [src]="addedItem.image || 'https://placehold.co/150'" [alt]="addedItem.name" class="w-full h-full object-cover">
           </div>
           <div class="flex flex-col justify-center">
             <h3 class="font-semibold text-gray-800 line-clamp-2">{{ addedItem.name }}</h3>

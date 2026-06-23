@@ -91,7 +91,7 @@
         <div class="products-grid">
           <div *ngFor="let product of storeProducts" class="product-card">
             <div class="product-image">
-              <img [src]="product.image || 'https://via.placeholder.com/300x200'" [alt]="product.name">
+              <img [src]="product.image || 'https://placehold.co/300x200'" [alt]="product.name">
             </div>
             <div class="product-info">
               <h3 class="product-name">{{ product.name }}</h3>
@@ -120,15 +120,21 @@
       </div>
 
       <!-- Botones de acción del vendedor -->
-      <div class="action-buttons">
-        <button (click)="toggleAddProductChat()" class="action-button primary">
-          Agregar Producto
+      <div class="action-buttons flex flex-wrap gap-2 mb-6">
+        <button (click)="setDashboardTab('stats')" [class.active]="dashboardTab === 'stats'" class="action-button secondary">
+          Inicio / Resumen
         </button>
-        <button (click)="toggleProductsView()" class="action-button secondary">
-          Ver Productos
+        <button (click)="setDashboardTab('products')" [class.active]="dashboardTab === 'products'" class="action-button secondary">
+          Mis Productos
         </button>
-        <button class="action-button secondary">
+        <button (click)="setDashboardTab('orders')" [class.active]="dashboardTab === 'orders'" class="action-button secondary">
           Ver Pedidos
+        </button>
+        <button (click)="setDashboardTab('chats')" [class.active]="dashboardTab === 'chats'" class="action-button secondary">
+          Mensajes / Consultas
+        </button>
+        <button (click)="toggleAddProductChat()" class="action-button primary flex-shrink-0 ml-auto">
+          + Agregar Producto
         </button>
       </div>
 
@@ -137,6 +143,275 @@
         <app-conversational-assistant [storeId]="store?.id" [storeName]="store?.name" (productCreatedEvent)="onProductCreated()"></app-conversational-assistant>
         <button (click)="toggleAddProductChat()" class="close-chat-btn">Cerrar</button>
       </div>
+
+      <!-- Vista de Pedidos del Vendedor -->
+      <div *ngIf="dashboardTab === 'orders'" class="orders-view mt-6">
+        <div class="products-view-header mb-6 flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Pedidos Recibidos</h2>
+            <p class="text-slate-500 text-sm">Lista de compras realizadas por clientes para tus productos.</p>
+          </div>
+          <button (click)="setDashboardTab('stats')" class="close-view-btn">Cerrar</button>
+        </div>
+
+        <!-- Sub-pestañas de filtrado de pedidos -->
+        <div *ngIf="!ordersLoading && sellerOrders.length > 0" class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3">
+          <button 
+            (click)="setOrdersFilter('all')" 
+            [class.border-indigo-600]="ordersFilter === 'all'"
+            [class.text-indigo-600]="ordersFilter === 'all'"
+            [class.border-transparent]="ordersFilter !== 'all'"
+            class="pb-2 px-4 font-semibold text-sm border-b-2 transition-all duration-200">
+            Todos ({{ sellerOrders.length }})
+          </button>
+          <button 
+            (click)="setOrdersFilter('pending')" 
+            [class.border-indigo-600]="ordersFilter === 'pending'"
+            [class.text-indigo-600]="ordersFilter === 'pending'"
+            [class.border-transparent]="ordersFilter !== 'pending'"
+            class="pb-2 px-4 font-semibold text-sm border-b-2 transition-all duration-200">
+            Pendientes ({{ getOrderCountByStatus('pending') }})
+          </button>
+          <button 
+            (click)="setOrdersFilter('completed')" 
+            [class.border-indigo-600]="ordersFilter === 'completed'"
+            [class.text-indigo-600]="ordersFilter === 'completed'"
+            [class.border-transparent]="ordersFilter !== 'completed'"
+            class="pb-2 px-4 font-semibold text-sm border-b-2 transition-all duration-200">
+            Finalizados ({{ getOrderCountByStatus('completed') }})
+          </button>
+          <button 
+            (click)="setOrdersFilter('canceled')" 
+            [class.border-indigo-600]="ordersFilter === 'canceled'"
+            [class.text-indigo-600]="ordersFilter === 'canceled'"
+            [class.border-transparent]="ordersFilter !== 'canceled'"
+            class="pb-2 px-4 font-semibold text-sm border-b-2 transition-all duration-200">
+            Cancelados ({{ getOrderCountByStatus('canceled') }})
+          </button>
+        </div>
+
+        <div *ngIf="ordersLoading" class="text-center py-12">
+          <div class="spinner-ring mx-auto mb-4"></div>
+          <p class="text-slate-400 text-sm">Cargando pedidos...</p>
+        </div>
+
+        <div *ngIf="!ordersLoading && sellerOrders.length === 0" class="no-products-message text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p class="text-slate-500 font-medium">Aún no has recibido ningún pedido.</p>
+          <p class="text-slate-400 text-xs mt-1">Los pedidos de tus clientes aparecerán aquí.</p>
+        </div>
+
+        <div *ngIf="!ordersLoading && sellerOrders.length > 0 && getFilteredOrders().length === 0" class="no-products-message text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p class="text-slate-500 font-medium">No hay pedidos en esta sección.</p>
+          <p class="text-slate-400 text-xs mt-1">Los pedidos con este estado aparecerán aquí.</p>
+        </div>
+
+        <div *ngIf="!ordersLoading && getFilteredOrders().length > 0" class="space-y-4">
+          <div *ngFor="let order of getPaginatedOrders()" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+            <!-- Order Header -->
+            <div class="bg-slate-50/60 px-5 py-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
+              <div>
+                <span class="text-xs text-slate-400 uppercase tracking-widest font-bold">Pedido #{{ order.id }}</span>
+                <div class="text-slate-800 text-sm font-semibold mt-0.5">{{ formatDate(order.created_at) }}</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="status-badge px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="getStatusClass(order.status)">
+                  {{ getStatusLabel(order.status) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Order Body -->
+            <div class="p-5 grid gap-5 md:grid-cols-3">
+              <!-- Client Details -->
+              <div class="md:col-span-1 border-r border-slate-100 pr-5">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cliente</h3>
+                <div class="space-y-1.5 text-sm text-slate-600">
+                  <div class="font-semibold text-slate-800">{{ order.client_name || 'Nombre no disponible' }}</div>
+                  <div>{{ order.client_email || 'Email no disponible' }}</div>
+                  <div>Teléfono: {{ order.contact_phone }}</div>
+                  <div class="text-xs mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <strong>Dirección:</strong> {{ order.shipping_address }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Products -->
+              <div class="md:col-span-1 border-r border-slate-100 px-5">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Productos Comprados</h3>
+                <div class="space-y-2">
+                  <div *ngFor="let prod of order.products" class="flex justify-between items-start text-sm">
+                    <span class="text-slate-700 leading-snug">
+                      ID #{{ prod.productId }} <span class="text-slate-400">×{{ prod.quantity }}</span>
+                    </span>
+                    <span class="font-semibold text-slate-900">S/ {{ (prod.price * prod.quantity) | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-400 uppercase">Monto Total del Pedido</span>
+                  <span class="text-base font-extrabold text-indigo-600">S/ {{ order.total_amount | number:'1.2-2' }}</span>
+                </div>
+              </div>
+
+              <!-- Delivery Code & Verification -->
+              <div class="md:col-span-1 pl-5 flex flex-col justify-between">
+                <div>
+                  <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Código de Entrega</h3>
+                  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                    <div class="text-lg font-bold text-slate-600 tracking-wider">
+                      🔑 Retenido
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-1.5">
+                      El comprador tiene el código de entrega. Solicítalo al momento de entregar el pedido para liberar el pago.
+                    </p>
+                  </div>
+                </div>
+                
+                <div class="mt-4 flex flex-col gap-2">
+                  <a *ngIf="order.status !== 'completed' && order.status !== 'canceled'" routerLink="/delivery" class="w-full text-center bg-indigo-600 text-white rounded-xl py-2.5 text-xs font-bold hover:bg-indigo-700 transition shadow-sm hover:shadow">
+                    Ir a Validar Entrega
+                  </a>
+                  <button *ngIf="order.status !== 'completed' && order.status !== 'canceled'" (click)="cancelOrder(order.id)" class="w-full text-center bg-red-50 text-red-600 border border-red-200 rounded-xl py-2.5 text-xs font-bold hover:bg-red-100 transition shadow-sm">
+                    Cancelar Pedido
+                  </button>
+                  <div *ngIf="order.status === 'canceled'" class="text-center text-xs text-red-500 font-semibold py-2 bg-red-50 border border-red-100 rounded-xl">
+                    Pedido Cancelado
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles de Paginación -->
+        <div *ngIf="!ordersLoading && getFilteredOrders().length > ordersPageSize" class="mt-6 flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <button 
+            (click)="prevOrdersPage()" 
+            [disabled]="ordersPage === 1"
+            class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            Anterior
+          </button>
+          <span class="text-xs text-slate-500 font-medium">
+            Página {{ ordersPage }} de {{ getOrdersTotalPages() }} ({{ getFilteredOrders().length }} pedidos)
+          </span>
+          <button 
+            (click)="nextOrdersPage()" 
+            [disabled]="ordersPage === getOrdersTotalPages()"
+            class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            Siguiente
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista de Chats del Vendedor -->
+      <div *ngIf="dashboardTab === 'chats'" class="chats-view mt-6">
+        <div class="products-view-header mb-6 flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Mensajes de Clientes</h2>
+            <p class="text-slate-500 text-sm">Responde a consultas o brinda soporte sobre pedidos.</p>
+          </div>
+          <button (click)="setDashboardTab('stats')" class="close-view-btn">Cerrar</button>
+        </div>
+
+        <div *ngIf="chatsLoading" class="text-center py-12">
+          <div class="spinner-ring mx-auto mb-4"></div>
+          <p class="text-slate-400 text-sm">Cargando conversaciones...</p>
+        </div>
+
+        <div *ngIf="!chatsLoading && sellerChats.length === 0" class="no-products-message text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p class="text-slate-500 font-medium">No tienes ningún chat activo con clientes.</p>
+          <p class="text-slate-400 text-xs mt-1">Las consultas de los compradores aparecerán aquí.</p>
+        </div>
+
+        <div *ngIf="!chatsLoading && sellerChats.length > 0" class="grid gap-6 md:grid-cols-3">
+          <!-- Chat List -->
+          <div class="md:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 h-[500px] overflow-y-auto space-y-2">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mb-3">Conversaciones</h3>
+            <button 
+              *ngFor="let chat of sellerChats" 
+              (click)="selectChat(chat.id)"
+              [class.bg-indigo-50]="openChatId === chat.id"
+              [class.border-indigo-200]="openChatId === chat.id"
+              class="w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 flex-shrink-0">
+                {{ (chat.buyer_name || 'C').charAt(0).toUpperCase() }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-slate-800 truncate text-sm flex justify-between items-center">
+                  <span>{{ chat.buyer_name || 'Comprador' }}</span>
+                  <span *ngIf="chat.order_id" class="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-bold">
+                    Pedido #{{ chat.order_id }}
+                  </span>
+                </div>
+                <div class="text-xs text-slate-500 truncate mt-0.5">{{ chat.product_name || 'Ver producto' }}</div>
+                <div class="text-[10px] text-slate-400 mt-1">{{ formatDate(chat.updated_at) }}</div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[500px]">
+            <!-- Active Chat Header -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between" *ngIf="openChatId">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">
+                  {{ getActiveChat()?.buyer_name?.charAt(0).toUpperCase() || 'C' }}
+                </div>
+                <div>
+                  <div class="font-bold text-slate-800 text-sm">
+                    Chat con {{ getActiveChat()?.buyer_name || 'Comprador' }}
+                  </div>
+                  <div class="text-[10px] text-slate-400">
+                    Producto: {{ getActiveChat()?.product_name || 'Detalles' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Placeholder when no chat open -->
+            <div class="flex-1 flex flex-col items-center justify-center text-slate-400 p-6" *ngIf="!openChatId">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-slate-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <p class="text-sm font-medium">Selecciona una conversación de la lista para ver los mensajes.</p>
+            </div>
+
+            <!-- Messages List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50" *ngIf="openChatId" id="chatMessages">
+              <div *ngIf="chatLoading" class="text-center py-4">
+                <div class="spinner-ring mx-auto mb-2"></div>
+                <p class="text-xs text-slate-400">Cargando mensajes...</p>
+              </div>
+              
+              <div *ngIf="!chatLoading && chatMessages.length === 0" class="text-center py-4 text-slate-400 text-xs">
+                No hay mensajes en este chat. Escribe un mensaje para iniciar la conversación.
+              </div>
+
+              <div *ngFor="let msg of chatMessages" class="flex flex-col" [class.items-end]="isMyMessage(msg)" [class.items-start]="!isMyMessage(msg)">
+                <div class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm"
+                  [ngClass]="isMyMessage(msg) ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'">
+                  {{ msg.content }}
+                </div>
+                <span class="text-[9px] text-slate-400 mt-1 px-1">{{ formatTime(msg.created_at) }}</span>
+              </div>
+            </div>
+
+            <!-- Send Input -->
+            <div class="p-3 border-t border-slate-100 bg-white rounded-b-2xl flex gap-2" *ngIf="openChatId">
+              <input 
+                type="text" 
+                [(ngModel)]="newChatMessage" 
+                (keyup.enter)="sendChatMessage()"
+                placeholder="Escribe tu respuesta..." 
+                class="form-input flex-1 min-h-[42px] py-2 px-4 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none" />
+              <button 
+                (click)="sendChatMessage()"
+                class="bg-indigo-600 text-white font-bold rounded-xl px-5 hover:bg-indigo-700 transition flex items-center justify-center">
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div> <!-- Closes chats-view -->
 
       <!-- Vista de productos con edición -->
       <div *ngIf="showProductsView" class="products-view">
@@ -153,7 +428,7 @@
           <div *ngFor="let product of storeProducts" class="product-item">
             <div class="product-item-info">
               <div class="product-item-image">
-                <img [src]="product.image || 'https://via.placeholder.com/100x100'" [alt]="product.name">
+                <img [src]="product.image || 'https://placehold.co/100x100'" [alt]="product.name">
               </div>
               <div class="product-item-details">
                 <h3>{{ product.name }}</h3>
@@ -208,7 +483,7 @@
       </div>
 
       <!-- Estadísticas rápidas -->
-      <div class="stats-grid">
+      <div class="stats-grid" *ngIf="dashboardTab === 'stats'">
         <div class="stat-card">
           <div class="stat-color stat-products"></div>
           <div class="stat-info">
@@ -240,7 +515,7 @@
       </div>
 
       <!-- Información de la tienda -->
-      <div class="store-info-card">
+      <div class="store-info-card" *ngIf="dashboardTab === 'stats'">
         <div class="store-info-header">
           <h2>Información de la Tienda</h2>
           <button (click)="toggleEditStore()" class="edit-store-btn">
@@ -302,8 +577,8 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </div> <!-- Closes dashboard-view -->
+  </div> <!-- Closes store-content -->
 
   <div *ngIf="!store && !isLoading && !errorMessage" class="no-store">
     <div class="no-store-content">
@@ -311,6 +586,25 @@
       <h2>No tienes una tienda</h2>
       <p>Conviértete en vendedor para comenzar a vender tus productos</p>
       <a routerLink="/become-seller" class="become-seller-button">Conviértete en Vendedor</a>
+    </div>
+  </div>
+
+  <!-- Modal Genérico de Confirmación Reutilizable -->
+  <div *ngIf="showConfirmModal" class="modal-overlay">
+    <div class="modal-content !max-w-md">
+      <div class="modal-header">
+        <h3>{{ confirmModalTitle }}</h3>
+        <button (click)="closeConfirmModal()" class="close-modal-btn">×</button>
+      </div>
+      <div class="modal-body text-slate-600 text-sm leading-relaxed py-2">
+        <p>{{ confirmModalMessage }}</p>
+      </div>
+      <div class="modal-footer pt-3 border-t border-slate-100 flex justify-end gap-2">
+        <button (click)="closeConfirmModal()" class="cancel-btn">Cancelar</button>
+        <button (click)="executeConfirmAction()" class="bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-5 py-2.5 transition text-sm">
+          Confirmar
+        </button>
+      </div>
     </div>
   </div>
 </div>

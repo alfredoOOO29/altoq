@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { SellerService } from '../../services/seller.service';
 import { ProductService } from '../../services/product.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
 import { ConversationalAssistantComponent } from '../../components/conversational-assistant/conversational-assistant.component';
 
 @Component({
@@ -29,14 +31,45 @@ export class SellerAreaComponent implements OnInit {
   editingProduct: any = {};
   isSavingProduct: boolean = false;
 
+  // Seller Dashboard additionals
+  user: any = null;
+  sellerOrders: any[] = [];
+  sellerChats: any[] = [];
+  ordersLoading = false;
+  chatsLoading = false;
+  dashboardTab: 'stats' | 'products' | 'orders' | 'chats' = 'stats';
+
+  // Order filtering and pagination
+  ordersFilter: 'all' | 'pending' | 'completed' | 'canceled' = 'all';
+  ordersPage = 1;
+  ordersPageSize = 5;
+
+  // Reusable confirmation modal state
+  showConfirmModal = false;
+  confirmModalTitle = '';
+  confirmModalMessage = '';
+  confirmActionCallback: (() => void) | null = null;
+
+  // Chat support properties
+  openChatId: number | null = null;
+  chatMessages: any[] = [];
+  newChatMessage: string = '';
+  chatLoading = false;
+  chatError = '';
+
   constructor(
     private sellerService: SellerService,
     private productService: ProductService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService,
+    private chatService: ChatService
   ) {}
 
   ngOnInit(): void {
     console.log('SellerAreaComponent initialized');
+    this.authService.user$.subscribe(u => {
+      this.user = u;
+    });
     this.loadMyStore();
   }
 
@@ -122,20 +155,22 @@ export class SellerAreaComponent implements OnInit {
   }
 
   deleteProduct(productId: number): void {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      return;
-    }
-
-    this.productService.deleteProduct(productId).subscribe({
-      next: () => {
-        this.loadStoreProducts();
-        this.toastService.show('Producto eliminado exitosamente', 'success');
-      },
-      error: (error) => {
-        console.error('Error deleting product:', error);
-        this.toastService.show('Error al eliminar el producto. Por favor, intenta nuevamente.', 'error');
+    this.openConfirmModal(
+      'Eliminar Producto',
+      '¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.',
+      () => {
+        this.productService.deleteProduct(productId).subscribe({
+          next: () => {
+            this.loadStoreProducts();
+            this.toastService.show('Producto eliminado exitosamente', 'success');
+          },
+          error: (error) => {
+            console.error('Error deleting product:', error);
+            this.toastService.show('Error al eliminar el producto. Por favor, intenta nuevamente.', 'error');
+          }
+        });
       }
-    });
+    );
   }
 
   onProductCreated(): void {
@@ -144,6 +179,218 @@ export class SellerAreaComponent implements OnInit {
 
   switchView(view: 'store' | 'dashboard'): void {
     this.currentView = view;
+  }
+
+  setDashboardTab(tab: 'stats' | 'products' | 'orders' | 'chats'): void {
+    this.dashboardTab = tab;
+    this.openChatId = null;
+    this.showProductsView = (tab === 'products');
+    if (tab === 'orders') {
+      this.loadSellerOrders();
+    } else if (tab === 'chats') {
+      this.loadSellerChats();
+    }
+  }
+
+  loadSellerOrders(): void {
+    this.ordersLoading = true;
+    this.sellerService.getSellerOrders().subscribe({
+      next: (orders) => {
+        this.sellerOrders = orders;
+        this.ordersLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading seller orders:', err);
+        this.ordersLoading = false;
+      }
+    });
+  }
+
+  loadSellerChats(): void {
+    this.chatsLoading = true;
+    this.chatService.getMyChats().subscribe({
+      next: (chats) => {
+        this.sellerChats = chats.filter(c => Number(c.seller_id) === Number(this.user?.id));
+        this.chatsLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading seller chats:', err);
+        this.chatsLoading = false;
+      }
+    });
+  }
+
+  selectChat(chatId: number): void {
+    if (this.openChatId === chatId) {
+      this.openChatId = null;
+      return;
+    }
+    this.openChatId = chatId;
+    this.chatLoading = true;
+    this.chatError = '';
+    this.chatMessages = [];
+    
+    this.chatService.getChatMessages(chatId).subscribe({
+      next: (messages) => {
+        this.chatMessages = messages;
+        this.chatLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading chat messages:', err);
+        this.chatError = 'Error al cargar mensajes.';
+        this.chatLoading = false;
+      }
+    });
+  }
+
+  getActiveChat(): any {
+    if (!this.openChatId) return null;
+    return this.sellerChats.find(c => c.id === this.openChatId);
+  }
+
+  sendChatMessage(): void {
+    if (!this.newChatMessage.trim() || !this.openChatId) return;
+
+    const content = this.newChatMessage;
+    this.newChatMessage = '';
+
+    this.chatService.sendMessage(this.openChatId, content).subscribe({
+      next: (msg) => {
+        this.chatMessages.push(msg);
+      },
+      error: (err) => {
+        console.error('Error sending message:', err);
+        this.newChatMessage = content;
+      }
+    });
+  }
+
+  isMyMessage(message: any): boolean {
+    return Number(message.sender_id) === Number(this.user?.id);
+  }
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'pending': 'Pendiente',
+      'confirmed': 'Confirmado',
+      'completed': 'Completado',
+      'canceled': 'Cancelado'
+    };
+    return map[status] || status;
+  }
+
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      'pending': 'bg-amber-100 text-amber-800',
+      'confirmed': 'bg-blue-100 text-blue-800',
+      'completed': 'bg-green-100 text-green-800',
+      'canceled': 'bg-red-100 text-red-800'
+    };
+    return map[status] || 'bg-slate-100 text-slate-700';
+  }
+
+  formatTime(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  copyCode(code: string): void {
+    navigator.clipboard.writeText(code);
+    this.toastService.show('Código copiado al portapapeles', 'success');
+  }
+
+  cancelOrder(orderId: number): void {
+    this.openConfirmModal(
+      'Cancelar Pedido',
+      '¿Estás seguro de que deseas cancelar este pedido? Se le notificará al cliente y se le reembolsará el dinero dentro de las próximas 24 horas.',
+      () => {
+        this.sellerService.cancelSellerOrder(orderId).subscribe({
+          next: (response) => {
+            this.toastService.show('Pedido cancelado exitosamente.', 'success');
+            this.loadSellerOrders();
+          },
+          error: (error) => {
+            console.error('Error cancelling order:', error);
+            const errorMsg = error.error?.detail || 'Error al cancelar el pedido. Intenta nuevamente.';
+            this.toastService.show(errorMsg, 'error');
+          }
+        });
+      }
+    );
+  }
+
+  openConfirmModal(title: string, message: string, action: () => void): void {
+    this.confirmModalTitle = title;
+    this.confirmModalMessage = message;
+    this.confirmActionCallback = action;
+    this.showConfirmModal = true;
+  }
+
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmActionCallback = null;
+  }
+
+  executeConfirmAction(): void {
+    if (this.confirmActionCallback) {
+      this.confirmActionCallback();
+    }
+    this.closeConfirmModal();
+  }
+
+  getFilteredOrders(): any[] {
+    if (this.ordersFilter === 'all') {
+      return this.sellerOrders;
+    } else if (this.ordersFilter === 'pending') {
+      return this.sellerOrders.filter(o => o.status === 'pending' || o.status === 'confirmed');
+    } else if (this.ordersFilter === 'completed') {
+      return this.sellerOrders.filter(o => o.status === 'completed');
+    } else if (this.ordersFilter === 'canceled') {
+      return this.sellerOrders.filter(o => o.status === 'canceled');
+    }
+    return this.sellerOrders;
+  }
+
+  getPaginatedOrders(): any[] {
+    const filtered = this.getFilteredOrders();
+    const startIndex = (this.ordersPage - 1) * this.ordersPageSize;
+    return filtered.slice(startIndex, startIndex + this.ordersPageSize);
+  }
+
+  getOrdersTotalPages(): number {
+    const count = this.getFilteredOrders().length;
+    return Math.ceil(count / this.ordersPageSize) || 1;
+  }
+
+  setOrdersFilter(filter: 'all' | 'pending' | 'completed' | 'canceled'): void {
+    this.ordersFilter = filter;
+    this.ordersPage = 1;
+  }
+
+  nextOrdersPage(): void {
+    if (this.ordersPage < this.getOrdersTotalPages()) {
+      this.ordersPage++;
+    }
+  }
+
+  prevOrdersPage(): void {
+    if (this.ordersPage > 1) {
+      this.ordersPage--;
+    }
+  }
+
+  getOrderCountByStatus(status: 'pending' | 'completed' | 'canceled'): number {
+    if (status === 'pending') {
+      return this.sellerOrders.filter(o => o.status === 'pending' || o.status === 'confirmed').length;
+    }
+    return this.sellerOrders.filter(o => o.status === status).length;
   }
 
   getThemeClass(): string {

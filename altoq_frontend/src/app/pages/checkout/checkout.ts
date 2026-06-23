@@ -6,6 +6,7 @@ import { CartService } from '../../services/cart';
 import { OrderService } from '../../services/order';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
+import { ToastService } from '../../services/toast.service';
 import { Cart } from '../../models/cart';
 
 @Component({
@@ -39,17 +40,25 @@ export class CheckoutComponent implements OnInit {
   cvv: string = '';
   isCardFlipped: boolean = false;
   cardType: 'visa' | 'mastercard' | 'amex' | 'generic' = 'generic';
+  rememberCard: boolean = false;
+  hasSavedCard: boolean = false;
 
   // ── Processing states ──────────────────────────────
   processing: boolean = false;
   paymentPhase: string = '';
   paymentError: string = '';
 
+  // ── Order result ───────────────────────────────────
+  deliveryCode: string = '';
+  orderId: number | null = null;
+  totalPaid: number = 0;
+
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
     private authService: AuthService,
     private userService: UserService,
+    private toastService: ToastService,
     private router: Router
   ) {
     this.cartService.cart$.subscribe(cart => {
@@ -84,6 +93,28 @@ export class CheckoutComponent implements OnInit {
         });
       }
     });
+
+    // Check for saved card in localStorage
+    const savedCardRaw = localStorage.getItem('saved_card');
+    if (savedCardRaw) {
+      try {
+        const savedCard = JSON.parse(savedCardRaw);
+        if (savedCard && savedCard.number) {
+          this.cardNumber = savedCard.number;
+          this.cardholderName = savedCard.holder || '';
+          this.expiryDate = savedCard.expiry || '';
+          this.cvv = savedCard.cvv || '';
+          this.rememberCard = true;
+          this.hasSavedCard = true;
+          
+          // Detect card type
+          const rawNum = this.cardNumber.replace(/\D/g, '');
+          this.detectCardType(rawNum);
+        }
+      } catch (e) {
+        console.error('Error loading saved card', e);
+      }
+    }
   }
 
   // ── Card formatting helpers ────────────────────────
@@ -215,15 +246,32 @@ export class CheckoutComponent implements OnInit {
               price: item.price
             })),
             total_amount: this.cart.totalPrice,
-            status: 'completed' as const,
+            status: 'pending' as const,
             shipping_address: shippingAddress,
             contact_phone: this.recipientPhone
           };
 
           this.orderService.createOrder(order).subscribe({
-            next: () => {
+            next: (createdOrder) => {
+              // Persist or clear card details based on user preference
+              if (this.rememberCard) {
+                localStorage.setItem('saved_card', JSON.stringify({
+                  number: this.cardNumber,
+                  holder: this.cardholderName,
+                  expiry: this.expiryDate,
+                  cvv: this.cvv
+                }));
+                this.hasSavedCard = true;
+              } else {
+                localStorage.removeItem('saved_card');
+                this.hasSavedCard = false;
+              }
+
+              this.totalPaid = this.cart.totalPrice;
               this.cartService.clearCart();
               this.processing = false;
+              this.deliveryCode = createdOrder.delivery_code ?? '';
+              this.orderId = createdOrder.id ?? null;
               this.step = 3;
               window.scrollTo({ top: 0, behavior: 'smooth' });
             },
@@ -242,4 +290,27 @@ export class CheckoutComponent implements OnInit {
   goHome(): void {
     this.router.navigate(['/']);
   }
+
+  goToOrders(): void {
+    this.router.navigate(['/my-orders']);
+  }
+
+  copyCode(): void {
+    if (this.deliveryCode) {
+      navigator.clipboard.writeText(this.deliveryCode);
+    }
+  }
+
+  clearSavedCard(): void {
+    localStorage.removeItem('saved_card');
+    this.cardNumber = '';
+    this.cardholderName = '';
+    this.expiryDate = '';
+    this.cvv = '';
+    this.rememberCard = false;
+    this.hasSavedCard = false;
+    this.cardType = 'generic';
+    this.toastService.show('Tarjeta guardada eliminada correctamente.', 'success');
+  }
 }
+

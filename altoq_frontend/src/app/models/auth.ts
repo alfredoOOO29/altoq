@@ -8,6 +8,7 @@ export interface User {
   is_admin: boolean;
   role?: 'BUYER' | 'SELLER' | 'BOTH';
   has_store?: boolean;
+  store_id?: number;
 }
 
 export interface LoginCredentials {

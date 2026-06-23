@@ -35,7 +35,8 @@ export class Products {
       quantity: 1,
       price: product.price,
       name: product.name,
-      image: product.image
+      image: product.image,
+      storeId: product.store_id
     });
   }
 }

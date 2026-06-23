@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 class OrderItem(BaseModel):
     productId: int
@@ -20,16 +20,22 @@ class OrderCreate(OrderBase):
 
 class OrderResponse(OrderBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    delivery_code: Optional[str] = None
+    client_name: Optional[str] = None
+    client_email: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 class Order(OrderBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    delivery_code: Optional[str] = None
+    client_name: Optional[str] = None
+    client_email: Optional[str] = None
 
     class Config:
         from_attributes = True
