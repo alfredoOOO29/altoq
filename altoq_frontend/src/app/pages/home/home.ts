@@ -23,7 +23,7 @@ export class HomeComponent {
     private cartService: CartService
   ) {
     this.products$ = this.productService.getProducts().pipe(
-      map(products => products.slice(0, 3)), // Mostrar solo 3 productos destacados
+      map(products => products.slice(0, 5)), // Mostrar solo 5 productos destacados
       catchError(() => {
         this.error = 'No se pudieron cargar los productos';
         return of([]);

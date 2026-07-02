@@ -1,0 +1,94 @@
+<div class="bg-slate-50 min-h-screen font-sans py-12 px-4">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <span class="text-xs uppercase tracking-widest text-[#0050d2] font-black">Marcas Aliadas</span>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">Nuestras Tiendas</h1>
+      <p class="text-sm md:text-base text-slate-500 mt-3 max-w-xl mx-auto">
+        Explora las tiendas creadas por nuestros vendedores asociados y descubre sus mejores productos.
+      </p>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="errorMessage" class="mb-8 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-800">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngFor="let i of [1,2,3]" class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm h-80 animate-pulse">
+        <div class="h-24 bg-slate-200"></div>
+        <div class="px-6 pb-6 relative flex flex-col items-center">
+          <div class="h-20 w-20 rounded-full border-4 border-white bg-slate-300 absolute -top-10 shadow-sm"></div>
+          <div class="h-6 w-3/4 bg-slate-200 rounded mt-12 mb-3"></div>
+          <div class="h-4 w-5/6 bg-slate-100 rounded mb-2"></div>
+          <div class="h-4 w-2/3 bg-slate-100 rounded mb-4"></div>
+          <div class="mt-auto h-10 w-full bg-slate-200 rounded-xl"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stores Grid -->
+    <div *ngIf="!isLoading && !errorMessage" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngFor="let store of stores" class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-md hover:border-blue-100 transition-all flex flex-col h-full group">
+        <!-- Store Header Banner (Gradient) -->
+        <div class="h-24 shrink-0 transition-opacity duration-300 group-hover:opacity-90" [style.background]="getThemeGradient(store.theme)"></div>
+        
+        <!-- Store Body -->
+        <div class="px-6 pb-6 relative flex flex-col flex-grow items-center text-center">
+          <!-- Logo Circle -->
+          <div class="h-20 w-20 rounded-full border-4 border-white bg-white flex items-center justify-center absolute -top-10 shadow-sm overflow-hidden select-none">
+            <img *ngIf="store.logo" [src]="store.logo" [alt]="store.name" class="h-full w-full object-cover">
+            <div *ngIf="!store.logo" class="h-full w-full flex items-center justify-center font-black text-xl text-white bg-slate-400">
+              {{ store.name.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+          
+          <!-- Content -->
+          <div class="mt-12 flex flex-col flex-grow">
+            <h2 class="text-lg font-bold text-slate-800 group-hover:text-[#0050d2] transition-colors leading-snug">
+              {{ store.name }}
+            </h2>
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1" *ngIf="store.owner_name">
+              Por: {{ store.owner_name }}
+            </p>
+            <p class="text-sm text-slate-500 mt-3 line-clamp-3 flex-grow">
+              {{ store.description || 'Esta tienda no tiene una descripción disponible.' }}
+            </p>
+            
+            <!-- Phone details if any -->
+            <p class="text-xs text-slate-400 mt-2 font-medium" *ngIf="store.phone">
+              Contacto: {{ store.phone }}
+            </p>
+          </div>
+
+          <!-- Action Button -->
+          <div class="mt-6 w-full shrink-0">
+            <a [routerLink]="['/store', store.id]"
+              class="block w-full text-center bg-[#0050d2] hover:bg-blue-700 text-white rounded-xl py-2.5 px-4 text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200">
+              Visitar Tienda
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !errorMessage && stores.length === 0" class="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div class="p-4 bg-blue-50 text-[#0050d2] rounded-full inline-flex items-center justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-slate-800">No hay tiendas registradas</h3>
+      <p class="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+        Aún no hay tiendas creadas por los vendedores. Vuelve más tarde o conviértete en vendedor para crear la tuya.
+      </p>
+      <div class="mt-6">
+        <a routerLink="/become-seller" class="inline-flex bg-[#0050d2] hover:bg-blue-700 text-white rounded-xl py-2.5 px-6 text-sm font-bold shadow-md transition-all duration-200">
+          Comenzar a vender
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

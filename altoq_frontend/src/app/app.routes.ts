@@ -18,6 +18,36 @@ export const routes: Routes = [
       import('./pages/products/products').then((m) => m.Products),
   },
   {
+    path: 'contacto',
+    loadComponent: () =>
+      import('./pages/contact/contact').then((m) => m.ContactComponent),
+  },
+  {
+    path: 'marcas',
+    loadComponent: () =>
+      import('./pages/marcas/marcas').then((m) => m.MarcasComponent),
+  },
+  {
+    path: 'nosotros',
+    loadComponent: () =>
+      import('./pages/nosotros/nosotros').then((m) => m.NosotrosComponent),
+  },
+  {
+    path: 'terminos',
+    loadComponent: () =>
+      import('./pages/terminos/terminos').then((m) => m.TerminosComponent),
+  },
+  {
+    path: 'privacidad',
+    loadComponent: () =>
+      import('./pages/privacidad/privacidad').then((m) => m.PrivacidadComponent),
+  },
+  {
+    path: 'faq',
+    loadComponent: () =>
+      import('./pages/faq/faq').then((m) => m.FaqComponent),
+  },
+  {
     path: 'products/:id',
     loadComponent: () =>
       import('./pages/product-detail/product-detail').then(

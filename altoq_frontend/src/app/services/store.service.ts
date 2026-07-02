@@ -27,6 +27,10 @@ export class StoreService {
     return this.http.get<PublicStore>(`${this.apiUrl}/${storeId}`);
   }
 
+  getPublicStores(): Observable<PublicStore[]> {
+    return this.http.get<PublicStore[]>(this.apiUrl);
+  }
+
   getStoreProducts(storeId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/${storeId}/products`);
   }

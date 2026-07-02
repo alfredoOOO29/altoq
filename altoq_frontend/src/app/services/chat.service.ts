@@ -49,6 +49,16 @@ export class ChatService {
     return this.http.post(`${this.apiUrl}/${chatId}/messages`, { content }, { headers: this.getHeaders() });
   }
 
+  sendInquiry(storeId: number, name: string, email: string, phone: string, message: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/inquiry`, {
+      store_id: storeId,
+      name,
+      email,
+      phone: phone || null,
+      message
+    });
+  }
+
   closeChat(chatId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${chatId}/close`, {}, { headers: this.getHeaders() });
   }
