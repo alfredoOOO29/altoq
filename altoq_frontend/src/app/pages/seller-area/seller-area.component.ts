@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { SellerService } from '../../services/seller.service';
 import { ProductService } from '../../services/product.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { InquiryService, StoreInquiry } from '../../services/inquiry.service';
 import { ConversationalAssistantComponent } from '../../components/conversational-assistant/conversational-assistant.component';
 
 @Component({
@@ -58,12 +60,18 @@ export class SellerAreaComponent implements OnInit {
   chatLoading = false;
   chatError = '';
 
+  // Inquiry (Consultas) properties
+  sellerInquiries: StoreInquiry[] = [];
+  openInquiryId: number | null = null;
+  openInquiry: StoreInquiry | null = null;
+
   constructor(
     private sellerService: SellerService,
     private productService: ProductService,
     private toastService: ToastService,
     private authService: AuthService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private inquiryService: InquiryService
   ) {}
 
   ngOnInit(): void {
@@ -209,15 +217,21 @@ export class SellerAreaComponent implements OnInit {
 
   loadSellerChats(): void {
     this.chatsLoading = true;
-    this.chatService.getMyChats().subscribe({
-      next: (chats) => {
-        this.sellerChats = chats.filter(c => Number(c.seller_id) === Number(this.user?.id));
+    forkJoin({
+      chats: this.chatService.getMyChats(),
+      inquiries: this.inquiryService.getMyStoreInquiries(),
+    }).subscribe({
+      next: ({ chats, inquiries }) => {
+        this.sellerChats = chats.filter(
+          (c) => Number(c.seller_id) === Number(this.user?.id)
+        );
+        this.sellerInquiries = inquiries;
         this.chatsLoading = false;
       },
       error: (err) => {
-        console.error('Error loading seller chats:', err);
+        console.error('Error loading seller chats/inquiries:', err);
         this.chatsLoading = false;
-      }
+      },
     });
   }
 
@@ -246,7 +260,29 @@ export class SellerAreaComponent implements OnInit {
 
   getActiveChat(): any {
     if (!this.openChatId) return null;
-    return this.sellerChats.find(c => c.id === this.openChatId);
+    return this.sellerChats.find((c) => c.id === this.openChatId);
+  }
+
+  /** Open an inquiry card — marks it read via API */
+  selectInquiry(inquiry: StoreInquiry): void {
+    if (this.openInquiryId === inquiry.id) {
+      this.openInquiryId = null;
+      this.openInquiry = null;
+      return;
+    }
+    // Deselect any open chat
+    this.openChatId = null;
+    this.chatMessages = [];
+    this.openInquiryId = inquiry.id;
+    this.openInquiry = inquiry;
+    // Mark as read if unread
+    if (!inquiry.is_read) {
+      this.inquiryService.markRead(inquiry.id).subscribe({
+        next: () => {
+          inquiry.is_read = true;
+        },
+      });
+    }
   }
 
   sendChatMessage(): void {

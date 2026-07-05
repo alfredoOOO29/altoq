@@ -4,10 +4,11 @@ import { filter } from 'rxjs';
 import { NavbarComponent } from './components/navbar/navbar';
 import { ToastComponent } from './components/toast/toast';
 import { CartAddedModalComponent } from './components/cart-added-modal/cart-added-modal.component';
+import { Footer } from './components/footer/footer';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent, ToastComponent, CartAddedModalComponent],
+  imports: [RouterOutlet, NavbarComponent, ToastComponent, CartAddedModalComponent, Footer],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
