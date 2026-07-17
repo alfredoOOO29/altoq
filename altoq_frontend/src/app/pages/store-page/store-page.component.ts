@@ -33,7 +33,7 @@ export class StorePageComponent implements OnInit {
     private cartService: CartService,
     private authService: AuthService,
     private sellerService: SellerService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const storeId = this.route.snapshot.paramMap.get('id');
