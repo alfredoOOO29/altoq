@@ -97,6 +97,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'chat/:chatId',
+    loadComponent: () =>
+      import('./components/internal-chat/internal-chat.component').then((m) => m.InternalChatComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'my-orders',
     loadComponent: () =>
       import('./pages/my-orders/my-orders.component').then((m) => m.MyOrdersComponent),

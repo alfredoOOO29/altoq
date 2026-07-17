@@ -304,8 +304,9 @@ def create_store_inquiry(
     # 2. Buscar o crear el usuario comprador (usando el email)
     buyer = db.query(UserModel).filter(UserModel.email == inquiry_data.email).first()
     if not buyer:
-        # Si no existe, crear un usuario temporal
-        temp_password_hash = hashlib.sha256(b"guest12345").hexdigest()
+        # Si no existe, crear un usuario temporal con hash bcrypt compatible con el login
+        from ..utils.security import get_password_hash
+        temp_password_hash = get_password_hash("guest12345")
         buyer = UserModel(
             email=inquiry_data.email,
             name=inquiry_data.name,
